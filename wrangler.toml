@@ -2,6 +2,11 @@ name = "classmate-web"
 compatibility_date = "2024-09-01"
 pages_build_output_dir = "dist"
 
+# Manual Pages fallback:
+#   npm run deploy
+#   npx wrangler pages deploy dist
+# Do not use `npx wrangler deploy` for a Cloudflare Pages project.
+
 # knowledge.md §8 — Required env vars / bindings.
 # Both IDs below are placeholders: create the KV namespace and R2 bucket in the
 # Cloudflare dashboard (or via `wrangler kv namespace create` / `wrangler r2 bucket

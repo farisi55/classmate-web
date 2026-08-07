@@ -54,6 +54,10 @@ Dashboard Cloudflare → **Workers & Pages** → **Create** → **Pages** → **
 Situs langsung live di `<nama-project>.pages.dev` — gratis, tanpa domain custom dulu,
 sesuai keputusan di brief.
 
+> Jika kamu menjalankan deploy secara manual dari repo, pakai `npm run deploy` atau
+> `npx wrangler pages deploy dist`. Jangan gunakan `npx wrangler deploy` karena ini
+> mencoba meng-deploy Worker entrypoint, bukan direktori Pages statis.
+
 ### 3. Buat KV namespace & R2 bucket (untuk Fase 2)
 ```bash
 npx wrangler kv namespace create CLASSMATE_KV
