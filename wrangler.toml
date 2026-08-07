@@ -9,7 +9,7 @@ pages_build_output_dir = "dist"
 
 [[kv_namespaces]]
 binding = "CLASSMATE_KV"
-id = "REPLACE_WITH_REAL_KV_NAMESPACE_ID"
+id = "87b5fe2bd58c4bb38e82008bfac5cd50"
 
 [[r2_buckets]]
 binding = "CLASSMATE_ASSETS"
