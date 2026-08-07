@@ -2,10 +2,13 @@ name = "classmate-web"
 compatibility_date = "2024-09-01"
 pages_build_output_dir = "dist"
 
+[assets]
+directory = "./dist"
+
 # Manual Pages fallback:
 #   npm run deploy
 #   npx wrangler pages deploy dist
-# Do not use `npx wrangler deploy` for a Cloudflare Pages project.
+# For the current deploy configuration, `npx wrangler deploy` will now use dist as assets source.
 
 # knowledge.md §8 — Required env vars / bindings.
 # Both IDs below are placeholders: create the KV namespace and R2 bucket in the
