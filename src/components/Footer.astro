@@ -1,0 +1,71 @@
+---
+import type { Locale } from '../lib/types';
+import { uiStrings, t } from '../data/ui-strings';
+import { siteConfig } from '../data/site-config';
+
+interface Props {
+  lang: Locale;
+}
+const { lang } = Astro.props;
+const prefix = lang === 'en' ? '/en' : '';
+const foundedYear = new Date(siteConfig.legalEntityFoundedISO).getFullYear();
+
+const columns = [
+  {
+    heading: t(uiStrings.nav.layanan, lang),
+    links: [
+      { href: `${prefix}/layanan`, label: t(uiStrings.nav.layanan, lang) },
+      { href: `${prefix}/aktivitas`, label: t(uiStrings.nav.aktivitas, lang) },
+    ],
+  },
+  {
+    heading: t(uiStrings.nav.klienVenue, lang),
+    links: [
+      { href: `${prefix}/klien-venue`, label: t(uiStrings.nav.klienVenue, lang) },
+      { href: `${prefix}/syarat-ketentuan`, label: t(uiStrings.nav.syaratKetentuan, lang) },
+    ],
+  },
+  {
+    heading: t(uiStrings.nav.tentang, lang),
+    links: [
+      { href: `${prefix}/tentang`, label: t(uiStrings.nav.tentang, lang) },
+      { href: `${prefix}/kontak`, label: t(uiStrings.nav.kontak, lang) },
+    ],
+  },
+];
+---
+
+<footer class="mt-20 border-t border-border bg-white">
+  <div class="container-content py-12">
+    <div class="grid grid-cols-2 gap-8 md:grid-cols-4">
+      <div class="col-span-2">
+        <img src="/img/logo/classmate-logo-fullcolor.png" alt="Classmate" width="120" height="87" class="h-10 w-auto mb-3" />
+        <p class="text-sm text-ink-soft max-w-xs">{t(uiStrings.footer.tagline, lang)}</p>
+        <div class="stitch-divider w-24 my-4"></div>
+        <p class="text-xs text-ink-soft">
+          {siteConfig.whatsapp.display} · {siteConfig.instagram.handle}
+        </p>
+      </div>
+      {columns.map((col) => (
+        <div>
+          <p class="font-body font-semibold text-sm mb-3">{col.heading}</p>
+          <ul class="space-y-2">
+            {col.links.map((link) => (
+              <li><a href={link.href} class="text-sm text-ink-soft hover:text-folly">{link.label}</a></li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+
+    <div class="stitch-divider mt-10 mb-6"></div>
+
+    <div class="flex flex-col gap-2 text-xs text-ink-soft sm:flex-row sm:items-center sm:justify-between">
+      <p>© {new Date().getFullYear()} Classmate. {t(uiStrings.footer.hakCipta, lang)}</p>
+      <p>
+        Classmate Indonesia {t(uiStrings.footer.dibawahNaungan, lang)} {siteConfig.legalEntity}
+        · {lang === 'id' ? siteConfig.sector.id : siteConfig.sector.en} · {lang === 'id' ? 'sejak' : 'since'} {foundedYear}
+      </p>
+    </div>
+  </div>
+</footer>

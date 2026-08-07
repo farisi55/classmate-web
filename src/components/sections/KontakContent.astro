@@ -1,0 +1,54 @@
+---
+import type { Locale } from '../../lib/types';
+import { uiStrings, t } from '../../data/ui-strings';
+import { buildWhatsAppLink, siteConfig } from '../../data/site-config';
+
+interface Props { lang: Locale }
+const { lang } = Astro.props;
+---
+
+<section class="container-content pt-12 pb-16 sm:pt-16 sm:pb-20">
+  <p class="eyebrow mb-3">{t(uiStrings.nav.kontak, lang)}</p>
+  <h1 class="font-display text-h1 mb-8 max-w-xl">
+    {lang === 'id' ? 'Ngobrol Dulu, Yuk' : "Let's Talk"}
+  </h1>
+
+  <div class="grid gap-4 sm:grid-cols-2 max-w-2xl">
+    <a
+      href={buildWhatsAppLink('')}
+      target="_blank"
+      rel="noopener"
+      class="card p-6 flex items-center gap-4 hover:shadow-lift transition-shadow"
+    >
+      <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.28-1.39a9.9 9.9 0 0 0 4.76 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2Z"/></svg>
+      </div>
+      <div>
+        <p class="font-semibold">WhatsApp</p>
+        <p class="text-sm text-ink-soft">{siteConfig.whatsapp.display}</p>
+      </div>
+    </a>
+
+    <a
+      href={siteConfig.instagram.url}
+      target="_blank"
+      rel="noopener"
+      class="card p-6 flex items-center gap-4 hover:shadow-lift transition-shadow"
+    >
+      <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-byzantine text-white">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/></svg>
+      </div>
+      <div>
+        <p class="font-semibold">Instagram</p>
+        <p class="text-sm text-ink-soft">{siteConfig.instagram.handle}</p>
+      </div>
+    </a>
+  </div>
+
+  <div class="mt-8 max-w-2xl">
+    <p class="text-sm text-ink-soft">
+      {lang === 'id' ? 'Area layanan: ' : 'Service area: '}
+      <span class="font-semibold text-ink">{lang === 'id' ? siteConfig.serviceArea.id : siteConfig.serviceArea.en}</span>
+    </p>
+  </div>
+</section>

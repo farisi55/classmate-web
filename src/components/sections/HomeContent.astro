@@ -1,0 +1,136 @@
+---
+import type { Locale } from '../../lib/types';
+import { t, uiStrings } from '../../data/ui-strings';
+import { buildWhatsAppLink, siteConfig } from '../../data/site-config';
+import { aktivitasInti } from '../../data/activities';
+import { testimonials, clientLogos } from '../../data/testimonials-clients';
+import PackageCard from '../PackageCard.astro';
+import TestimonialCard from '../TestimonialCard.astro';
+import LogoWall from '../LogoWall.astro';
+import { packages } from '../../data/packages';
+
+interface Props { lang: Locale }
+const { lang } = Astro.props;
+const prefix = lang === 'en' ? '/en' : '';
+
+const categories = [
+  {
+    icon: 'M12 2c-3 3-5 6-5 9a5 5 0 0 0 10 0c0-3-2-6-5-9Z',
+    title: { id: 'Aktivitas Anak', en: 'Kids Activities' },
+    desc: { id: 'Art & craft seru untuk mengisi waktu belajar-bermain si kecil.', en: 'Fun art & craft to fill your child\'s learn-through-play time.' },
+  },
+  {
+    icon: 'M12 2 15 9 22 9.5 17 14.5 18.5 21 12 17.5 5.5 21 7 14.5 2 9.5 9 9 12 2Z',
+    title: { id: 'Ulang Tahun', en: 'Birthdays' },
+    desc: { id: 'Pesta ulang tahun penuh warna, tinggal datang dan rayakan.', en: 'A colorful birthday party — just show up and celebrate.' },
+  },
+  {
+    icon: 'M4 4h16v16H4z',
+    title: { id: 'Kelas Dewasa', en: 'Adult Classes' },
+    desc: { id: 'Dari yoga sampai resin — waktu healing yang produktif.', en: 'From yoga to resin art — productive, relaxing time off.' },
+  },
+  {
+    icon: 'M3 21h18M5 21V7l7-4 7 4v14M9 9h1m4 0h1m-6 4h1m4 0h1',
+    title: { id: 'Brand & Korporat', en: 'Brand & Corporate' },
+    desc: { id: 'Aktivasi brand & family gathering yang dikemas berkesan.', en: 'Brand activations & family gatherings, made memorable.' },
+  },
+  {
+    icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 0a4 4 0 0 0 4-4 4 4 0 0 0-4-4m4 12v-1a4 4 0 0 0-3-3.87',
+    title: { id: 'Acara Sosial', en: 'Social Events' },
+    desc: { id: 'Buka bersama sampai kumpul komunitas, tetap kreatif.', en: 'From communal gatherings to community meetups, kept creative.' },
+  },
+];
+---
+
+<section class="container-content pt-12 pb-16 sm:pt-16 sm:pb-20">
+  <div class="grid gap-10 lg:grid-cols-2 lg:items-center">
+    <div>
+      <p class="eyebrow mb-3">{lang === 'id' ? 'Art & Craft Party — Semua Usia' : 'Art & Craft Party — All Ages'}</p>
+      <h1 class="font-display text-h1 mb-5">
+        {lang === 'id' ? (
+          <>Dari ulang tahun anak sampai acara brand — kami rancang pengalaman <span class="text-folly">art &amp; craft</span> yang bikin semua orang turun tangan.</>
+        ) : (
+          <>From kids birthdays to brand events — we design <span class="text-folly">art &amp; craft</span> experiences that get everyone's hands in.</>
+        )}
+      </h1>
+      <p class="text-ink-soft mb-7 max-w-md">
+        {lang === 'id'
+          ? 'Dipercaya developer properti, sekolah, dan brand di Jabodetabek untuk menghadirkan momen kreatif yang berkesan.'
+          : 'Trusted by property developers, schools, and brands across Jabodetabek to deliver memorable creative moments.'}
+      </p>
+      <div class="flex flex-wrap gap-3">
+        <a href={`${prefix}/layanan`} class="btn-primary">{t(uiStrings.cta.lihatPaket, lang)}</a>
+        <a href={buildWhatsAppLink('')} target="_blank" rel="noopener" class="btn-whatsapp">{t(uiStrings.cta.whatsapp, lang)}</a>
+      </div>
+    </div>
+
+    <div class="relative rounded-lg bg-white card p-8 sm:p-10" aria-hidden="true">
+      <div class="stitch-border rounded-md p-8 flex flex-col items-center justify-center text-center gap-3">
+        <img src="/img/logo/classmate-logo-fullcolor.png" alt="" width="180" height="131" class="w-36 sm:w-44 h-auto" />
+        <p class="text-xs text-ink-soft max-w-[220px]">
+          {lang === 'id' ? 'Kolase foto dokumentasi acara akan tampil di sini' : 'Event documentation photo collage goes here'}
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="container-content pb-16 sm:pb-20">
+  <h2 class="font-display text-h2 mb-8">{lang === 'id' ? 'Layanan Kami' : 'What We Offer'}</h2>
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    {categories.map((cat) => (
+      <div class="card p-5">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF7110" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="mb-3">
+          <path d={cat.icon}></path>
+        </svg>
+        <h3 class="font-display font-semibold text-sm mb-1">{t(cat.title, lang)}</h3>
+        <p class="text-xs text-ink-soft">{t(cat.desc, lang)}</p>
+      </div>
+    ))}
+  </div>
+</section>
+
+<section class="bg-white py-16 sm:py-20">
+  <div class="container-content">
+    <div class="flex items-end justify-between mb-8 flex-wrap gap-3">
+      <h2 class="font-display text-h2">{lang === 'id' ? 'Aktivitas Populer' : 'Popular Activities'}</h2>
+      <a href={`${prefix}/aktivitas`} class="stitch-underline font-semibold text-sm text-folly">{t(uiStrings.cta.lihatAktivitas, lang)}</a>
+    </div>
+    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      {aktivitasInti.slice(0, 8).map((act) => (
+        <div class="card p-4">
+          <h3 class="font-display font-semibold text-sm mb-1">{t(act.name, lang)}</h3>
+          <p class="text-xs text-ink-soft line-clamp-2">{t(act.summary, lang)}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<section class="container-content py-16 sm:py-20">
+  <h2 class="font-display text-h2 mb-8">{lang === 'id' ? 'Kata Mereka' : 'What People Say'}</h2>
+  <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+    {testimonials.map((tst) => <TestimonialCard lang={lang} testimonial={tst} />)}
+  </div>
+</section>
+
+<section class="bg-white py-16 sm:py-20">
+  <div class="container-content">
+    <p class="text-center text-sm font-semibold text-ink-soft mb-8">
+      {lang === 'id' ? 'Dipercaya oleh' : 'Trusted by'}
+    </p>
+    <LogoWall entries={clientLogos.slice(0, 8)} />
+  </div>
+</section>
+
+<section class="container-content py-16 sm:py-20">
+  <div class="card bg-folly text-white p-10 text-center rounded-lg">
+    <h2 class="font-display text-h2 mb-3">{lang === 'id' ? 'Siap rencanakan acaramu?' : 'Ready to plan your event?'}</h2>
+    <p class="mb-6 max-w-lg mx-auto text-white/90">
+      {lang === 'id' ? 'Chat langsung dengan tim kami, tanpa perlu isi form panjang.' : 'Chat directly with our team — no long forms to fill out.'}
+    </p>
+    <a href={buildWhatsAppLink('')} target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-sm bg-white text-folly px-6 py-3 font-semibold hover:bg-ivory transition-colors">
+      {t(uiStrings.cta.whatsapp, lang)}
+    </a>
+  </div>
+</section>

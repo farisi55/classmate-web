@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AdminTickerForm from '../../components/islands/AdminTickerForm';
+---
+<BaseLayout
+  lang="id"
+  title="Admin — Running Header"
+  description="Panel internal Classmate untuk mengelola pesan running header."
+>
+  <section class="container-content py-12 max-w-2xl">
+    <div class="mb-6 rounded-sm bg-yellow/30 p-4 text-sm">
+      <strong>Internal only.</strong> Halaman ini wajib dipasangi Cloudflare Access
+      di dashboard Cloudflare (Zero Trust → Access → Applications) sebelum
+      dipublikasikan — lihat README.md bagian Deploy, langkah 5.
+    </div>
+    <h1 class="font-display text-h2 mb-6">Kelola Running Header</h1>
+    <AdminTickerForm client:load />
+  </section>
+</BaseLayout>

@@ -1,0 +1,35 @@
+---
+import type { Locale } from '../../lib/types';
+import { activities } from '../../data/activities';
+import { uiStrings, t } from '../../data/ui-strings';
+import ActivityExplorer from '../islands/ActivityExplorer';
+
+interface Props { lang: Locale }
+const { lang } = Astro.props;
+
+const strings = {
+  semua: t(uiStrings.common.semua, lang),
+  aktivitasInti: t(uiStrings.common.aktivitasInti, lang),
+  kelasLainnya: t(uiStrings.common.kelasLainnya, lang),
+  tutup: t(uiStrings.common.tutup, lang),
+  minPeserta: t(uiStrings.common.minPeserta, lang),
+  lihatDokumentasi: t(uiStrings.cta.lihatDokumentasi, lang),
+  dokumentasiSegera: t(uiStrings.common.dokumentasiSegera, lang),
+};
+---
+
+<section class="container-content pt-12 pb-8 sm:pt-16">
+  <p class="eyebrow mb-3">{lang === 'id' ? '38 Pilihan Aktivitas' : '38 Activity Options'}</p>
+  <h1 class="font-display text-h1 mb-4 max-w-2xl">
+    {lang === 'id' ? 'Aktivitas & Kelas Kami' : 'Our Activities & Classes'}
+  </h1>
+  <p class="text-ink-soft max-w-xl">
+    {lang === 'id'
+      ? '10 aktivitas inti sudah termasuk dalam paket Art Party. 28 kelas lainnya dipesan terpisah, minimum 20 peserta. Klik kartu untuk detail & dokumentasi.'
+      : '10 core activities are already included in an Art Party package. 28 other classes are booked separately, minimum 20 participants. Click a card for details & documentation.'}
+  </p>
+</section>
+
+<section class="container-content pb-20">
+  <ActivityExplorer client:visible activities={activities} lang={lang} strings={strings} />
+</section>

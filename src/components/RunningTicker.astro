@@ -1,0 +1,75 @@
+---
+import type { Locale } from '../lib/types';
+import { defaultTickerMessages } from '../data/ticker-defaults';
+
+interface Props {
+  lang: Locale;
+}
+const { lang } = Astro.props;
+
+// Server-rendered fallback so the ticker never depends on JS or the API
+// being reachable — see knowledge.md §5 (no hard runtime dependency for
+// a page to render correctly).
+const messages = defaultTickerMessages
+  .filter((m) => m.active)
+  .sort((a, b) => a.priority - b.priority);
+---
+
+<div class="bg-byzantine text-white text-sm font-body font-medium overflow-hidden" data-ticker-root data-lang={lang}>
+  <div class="container-content py-2">
+    <p data-ticker-text class="text-center transition-opacity duration-300">
+      {lang === 'id' ? messages[0]?.text_id : messages[0]?.text_en}
+    </p>
+  </div>
+</div>
+
+<script>
+  interface TickerMessage {
+    id: string;
+    text_id: string;
+    text_en: string;
+    active: boolean;
+    priority: number;
+  }
+
+  const root = document.querySelector<HTMLElement>('[data-ticker-root]');
+  const textEl = document.querySelector<HTMLElement>('[data-ticker-text]');
+  if (!root || !textEl) throw new Error('ticker mount points missing');
+
+  const lang = root.dataset.lang === 'en' ? 'en' : 'id';
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function textFor(msg: TickerMessage) {
+    return lang === 'en' ? msg.text_en : msg.text_id;
+  }
+
+  function startRotation(messages: TickerMessage[]) {
+    if (messages.length <= 1 || prefersReducedMotion) return;
+    let i = 0;
+    setInterval(() => {
+      i = (i + 1) % messages.length;
+      textEl!.style.opacity = '0';
+      setTimeout(() => {
+        textEl!.textContent = textFor(messages[i]);
+        textEl!.style.opacity = '1';
+      }, 300);
+    }, 4500);
+  }
+
+  // Progressive enhancement: try the KV-backed endpoint (Fase 2). If it's
+  // not deployed yet, or the fetch fails, silently keep the server-rendered
+  // default content — the ticker degrades gracefully either way.
+  fetch('/api/ticker')
+    .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
+    .then((json: { data?: TickerMessage[] }) => {
+      const messages = (json.data ?? [])
+        .filter((m) => m.active)
+        .sort((a, b) => a.priority - b.priority);
+      if (messages.length === 0) return;
+      textEl!.textContent = textFor(messages[0]);
+      startRotation(messages);
+    })
+    .catch(() => {
+      // /api/ticker not deployed yet or unreachable — fine, defaults stand.
+    });
+</script>

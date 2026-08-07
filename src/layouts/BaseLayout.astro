@@ -1,0 +1,58 @@
+---
+import '../styles/global.css';
+import type { Locale } from '../lib/types';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import WhatsAppButton from '../components/WhatsAppButton.astro';
+import RunningTicker from '../components/RunningTicker.astro';
+
+interface Props {
+  lang: Locale;
+  title: string;
+  description: string;
+}
+
+const { lang, title, description } = Astro.props;
+const canonicalPath = lang === 'id' ? Astro.url.pathname.replace(/^\/en/, '') : Astro.url.pathname;
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/img/logo/classmate-logo-fullcolor.png" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{title} — Classmate</title>
+    <meta name="description" content={description} />
+
+    <link rel="canonical" href={new URL(canonicalPath, Astro.site)} />
+    {lang === 'id' && <link rel="alternate" hreflang="en" href={new URL(`/en${Astro.url.pathname}`, Astro.site)} />}
+    {lang === 'en' && <link rel="alternate" hreflang="id" href={new URL(Astro.url.pathname.replace(/^\/en/, ''), Astro.site)} />}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={`${title} — Classmate`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL('/img/logo/classmate-logo-fullcolor.png', Astro.site)} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'LocalBusiness',
+      name: 'Classmate',
+      description: 'Art & craft party organizer — Bogor, Jabodetabek',
+      areaServed: 'Jabodetabek',
+      telephone: '+62899-240-0880',
+    })} />
+  </head>
+  <body>
+    <RunningTicker lang={lang} />
+    <Header lang={lang} />
+    <main>
+      <slot />
+    </main>
+    <Footer lang={lang} />
+    <WhatsAppButton lang={lang} />
+  </body>
+</html>

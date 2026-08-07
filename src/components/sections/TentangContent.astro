@@ -1,0 +1,43 @@
+---
+import type { Locale } from '../../lib/types';
+import { siteConfig } from '../../data/site-config';
+
+interface Props { lang: Locale }
+const { lang } = Astro.props;
+const foundedYear = new Date(siteConfig.legalEntityFoundedISO).getFullYear();
+---
+
+<section class="container-content pt-12 pb-10 sm:pt-16">
+  <p class="eyebrow mb-3">{lang === 'id' ? 'Tentang Kami' : 'About Us'}</p>
+  <h1 class="font-display text-h1 mb-6 max-w-2xl">
+    {lang === 'id' ? 'A Celebration of Love and Togetherness' : 'A Celebration of Love and Togetherness'}
+  </h1>
+  <div class="prose max-w-2xl text-ink-soft space-y-4">
+    <p class="text-sm sm:text-base">
+      {lang === 'id'
+        ? `Classmate menghadirkan pengalaman art & craft yang menyatukan anak-anak, keluarga, dan komunitas lewat kegiatan kreatif langsung — dari pesta ulang tahun sampai aktivasi brand berskala besar.`
+        : `Classmate creates art & craft experiences that bring children, families, and communities together through hands-on creative activities — from birthday parties to large-scale brand activations.`}
+    </p>
+    <p class="text-sm sm:text-base">
+      {lang === 'id'
+        ? `Beroperasi di area Bogor–Jabodetabek, kami bekerja sama dengan developer properti, sekolah, brand, dan berbagai venue untuk merancang momen yang tidak sekadar seru, tapi juga berkesan.`
+        : `Operating across the Bogor–Jabodetabek area, we work with property developers, schools, brands, and venues to design moments that aren't just fun, but memorable.`}
+    </p>
+  </div>
+</section>
+
+<section class="bg-white py-14">
+  <div class="container-content max-w-2xl">
+    <h2 class="font-display text-h3 mb-4">{lang === 'id' ? 'Badan Usaha' : 'Legal Entity'}</h2>
+    <div class="card p-6">
+      <p class="font-semibold">{siteConfig.legalEntity}</p>
+      <p class="text-sm text-ink-soft mt-1">
+        {lang === 'id' ? siteConfig.sector.id : siteConfig.sector.en} · {lang === 'id' ? 'berdiri' : 'established'} {foundedYear}
+      </p>
+      <div class="stitch-divider my-4"></div>
+      <p class="text-sm text-ink-soft">
+        {lang === 'id' ? 'Area layanan: ' : 'Service area: '}{lang === 'id' ? siteConfig.serviceArea.id : siteConfig.serviceArea.en}
+      </p>
+    </div>
+  </div>
+</section>

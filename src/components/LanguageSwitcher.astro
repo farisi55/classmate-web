@@ -1,0 +1,31 @@
+---
+import type { Locale } from '../lib/types';
+import { uiStrings } from '../data/ui-strings';
+
+interface Props {
+  lang: Locale;
+}
+const { lang } = Astro.props;
+
+// Swap the locale prefix on the current path while keeping the rest of the URL.
+const currentPath = Astro.url.pathname;
+const idHref = currentPath.replace(/^\/en/, '') || '/';
+const enHref = lang === 'en' ? currentPath : `/en${currentPath}`.replace(/\/en\/en/, '/en');
+---
+
+<div class="inline-flex items-center rounded-full border-2 border-ink/10 p-0.5 font-body text-xs font-bold" role="group" aria-label="Language">
+  <a
+    href={idHref}
+    class:list={['px-2.5 py-1 rounded-full transition-colors', lang === 'id' ? 'bg-folly text-white' : 'text-ink-soft hover:text-ink']}
+    aria-current={lang === 'id' ? 'true' : undefined}
+  >
+    {uiStrings.languageSwitcher.id}
+  </a>
+  <a
+    href={enHref}
+    class:list={['px-2.5 py-1 rounded-full transition-colors', lang === 'en' ? 'bg-folly text-white' : 'text-ink-soft hover:text-ink']}
+    aria-current={lang === 'en' ? 'true' : undefined}
+  >
+    {uiStrings.languageSwitcher.en}
+  </a>
+</div>

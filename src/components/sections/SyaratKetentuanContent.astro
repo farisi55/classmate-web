@@ -1,0 +1,93 @@
+---
+import type { Locale } from '../../lib/types';
+import { uiStrings, t } from '../../data/ui-strings';
+import { buildWhatsAppLink } from '../../data/site-config';
+
+interface Props { lang: Locale }
+const { lang } = Astro.props;
+
+// Points marked [PLACEHOLDER] are standard EO policy structure but need a
+// real number/window from the business owner before publishing — see
+// ASSET_MANIFEST.md "Content still needed". Everything else (transport,
+// minimum participants, what's included) is sourced directly from the
+// confirmed 2026 pricelist.
+const paymentPolicy = [
+  {
+    id: 'Booking dikonfirmasi setelah DP dibayarkan [PLACEHOLDER: % / nominal DP belum ditentukan].',
+    en: 'A booking is confirmed once the down payment is received [PLACEHOLDER: DP % / amount not yet set].',
+  },
+  {
+    id: 'Pelunasan paling lambat [PLACEHOLDER: berapa hari] sebelum tanggal acara.',
+    en: 'Full payment is due at latest [PLACEHOLDER: number of days] before the event date.',
+  },
+  {
+    id: 'Free transport untuk area Jabodetabek khusus tier paket (25/50/100 peserta). Di luar tier paket atau di luar Jabodetabek, biaya transport dikenakan terpisah.',
+    en: 'Free transport within Jabodetabek applies to the package tiers (25/50/100 participants) only. Outside a package tier or outside Jabodetabek, transport is charged separately.',
+  },
+];
+
+const participantCommitment = [
+  {
+    id: 'Tier "Activity Only" minimum 10 peserta; "Kelas Lainnya" minimum 20 peserta. Jumlah di bawah minimum dapat memengaruhi harga per peserta.',
+    en: 'The "Activity Only" tier requires a minimum of 10 participants; "Other Classes" require a minimum of 20. Numbers below the minimum may affect the per-participant rate.',
+  },
+  {
+    id: 'Perubahan jumlah peserta signifikan mendekati hari-H [PLACEHOLDER: berapa hari sebelum acara] dapat memengaruhi ketersediaan crew dan bahan.',
+    en: 'A significant change in participant count close to the event date [PLACEHOLDER: how many days before] may affect crew and material availability.',
+  },
+  {
+    id: 'Merchandise dan apron dipinjamkan selama acara berlangsung, mengikuti ketentuan masing-masing paket.',
+    en: 'Merchandise and aprons are provided on loan for the duration of the event, per each package\'s terms.',
+  },
+];
+---
+
+<section class="container-content pt-12 pb-8 sm:pt-16">
+  <p class="eyebrow mb-3">{lang === 'id' ? 'Kebijakan' : 'Policies'}</p>
+  <h1 class="font-display text-h1 mb-4 max-w-2xl">
+    {lang === 'id' ? 'Syarat & Ketentuan' : 'Terms & Policies'}
+  </h1>
+  <p class="text-ink-soft max-w-xl">
+    {lang === 'id'
+      ? 'Beberapa poin penting seputar pembayaran dan komitmen peserta, supaya kerja sama berjalan lancar untuk kedua pihak.'
+      : 'A few important points about payment and participant commitment, so working together goes smoothly for both sides.'}
+  </p>
+</section>
+
+<section class="container-content pb-12">
+  <div class="card p-6 sm:p-8 mb-6">
+    <h2 class="font-display text-h3 mb-4">{lang === 'id' ? 'Kebijakan Pembayaran' : 'Payment Policy'}</h2>
+    <ul class="space-y-3">
+      {paymentPolicy.map((item) => (
+        <li class="flex gap-3 text-sm">
+          <span class="text-folly font-bold">•</span>
+          <span>{lang === 'id' ? item.id : item.en}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+
+  <div class="card p-6 sm:p-8">
+    <h2 class="font-display text-h3 mb-4">{lang === 'id' ? 'Komitmen Peserta' : 'Participant Commitment'}</h2>
+    <ul class="space-y-3">
+      {participantCommitment.map((item) => (
+        <li class="flex gap-3 text-sm">
+          <span class="text-folly font-bold">•</span>
+          <span>{lang === 'id' ? item.id : item.en}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<section class="container-content pb-16">
+  <div class="stitch-border rounded-md p-5 text-sm text-ink-soft">
+    {lang === 'id'
+      ? 'Ada pertanyaan soal ketentuan di atas? Diskusikan langsung dengan tim kami sebelum booking.'
+      : 'Questions about the terms above? Talk it through directly with our team before booking.'}
+    {' '}
+    <a href={buildWhatsAppLink('')} target="_blank" rel="noopener" class="stitch-underline font-semibold text-folly">
+      {t(uiStrings.cta.whatsapp, lang)}
+    </a>
+  </div>
+</section>

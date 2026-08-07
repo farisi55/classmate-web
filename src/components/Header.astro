@@ -1,0 +1,97 @@
+---
+import type { Locale } from '../lib/types';
+import { uiStrings, t } from '../data/ui-strings';
+import { buildWhatsAppLink, siteConfig } from '../data/site-config';
+import LanguageSwitcher from './LanguageSwitcher.astro';
+
+interface Props {
+  lang: Locale;
+}
+const { lang } = Astro.props;
+const prefix = lang === 'en' ? '/en' : '';
+
+const navItems = [
+  { href: `${prefix}/`, label: t(uiStrings.nav.home, lang) },
+  { href: `${prefix}/layanan`, label: t(uiStrings.nav.layanan, lang) },
+  { href: `${prefix}/aktivitas`, label: t(uiStrings.nav.aktivitas, lang) },
+  { href: `${prefix}/klien-venue`, label: t(uiStrings.nav.klienVenue, lang) },
+  { href: `${prefix}/kontak`, label: t(uiStrings.nav.kontak, lang) },
+];
+---
+
+<header class="sticky top-0 z-40 bg-ivory/90 backdrop-blur border-b border-border">
+  <div class="container-content flex items-center justify-between py-3">
+    <a href={prefix || '/'} class="flex items-center gap-2 shrink-0">
+      <img
+        src="/img/logo/classmate-logo-fullcolor.png"
+        alt="Classmate"
+        width="140"
+        height="102"
+        class="h-10 w-auto sm:h-12"
+      />
+    </a>
+
+    <nav class="hidden lg:flex items-center gap-7 font-body font-medium text-sm" aria-label="Main">
+      {navItems.map((item) => (
+        <a href={item.href} class="stitch-underline text-ink hover:text-folly transition-colors">
+          {item.label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="hidden lg:flex items-center gap-3">
+      <LanguageSwitcher lang={lang} />
+      <a href={buildWhatsAppLink('')} target="_blank" rel="noopener" class="btn-primary">
+        {t(uiStrings.cta.whatsapp, lang)}
+      </a>
+    </div>
+
+    <button
+      id="mobile-menu-toggle"
+      type="button"
+      class="lg:hidden inline-flex items-center justify-center w-11 h-11 rounded-sm border-2 border-ink/10"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+      aria-label="Menu"
+    >
+      <svg id="icon-open" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+      <svg id="icon-close" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="hidden">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+
+  <div id="mobile-menu" class="hidden lg:hidden border-t border-border bg-ivory">
+    <nav class="container-content flex flex-col py-4 gap-1 font-body font-medium" aria-label="Mobile">
+      {navItems.map((item) => (
+        <a href={item.href} class="py-2.5 text-ink hover:text-folly">{item.label}</a>
+      ))}
+      <div class="pt-3 flex items-center justify-between">
+        <LanguageSwitcher lang={lang} />
+        <a href={buildWhatsAppLink('')} target="_blank" rel="noopener" class="btn-primary">
+          {t(uiStrings.cta.whatsapp, lang)}
+        </a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const toggle = document.getElementById('mobile-menu-toggle');
+  const menu = document.getElementById('mobile-menu');
+  const iconOpen = document.getElementById('icon-open');
+  const iconClose = document.getElementById('icon-close');
+
+  toggle?.addEventListener('click', () => {
+    const isOpen = menu?.classList.contains('hidden') === false;
+    menu?.classList.toggle('hidden');
+    iconOpen?.classList.toggle('hidden');
+    iconClose?.classList.toggle('hidden');
+    toggle.setAttribute('aria-expanded', String(!isOpen));
+  });
+</script>

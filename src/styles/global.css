@@ -1,0 +1,168 @@
+/* @import must be the very first statement in the file per CSS spec —
+   ahead of @tailwind directives too, or the browser (and some bundlers)
+   will silently drop it. */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   Fonts
+   Fredoka (primary display) + Baloo 2 (alternate display, small accents) are
+   both on Google Fonts, loaded above. Human Sans (body/UI) is OFL-licensed
+   but NOT on Google Fonts — self-hosted below. Drop the four .woff2 files
+   into /public/fonts/human-sans/ (see ASSET_MANIFEST.md) before deploying;
+   until then this falls back to system-ui, which is a safe, readable
+   fallback rather than a broken font load.
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Human Sans';
+  src: url('/fonts/human-sans/HumanSans-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Human Sans';
+  src: url('/fonts/human-sans/HumanSans-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Human Sans';
+  src: url('/fonts/human-sans/HumanSans-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Human Sans';
+  src: url('/fonts/human-sans/HumanSans-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-ivory text-ink font-body text-base antialiased;
+}
+
+h1, h2, h3 {
+  @apply font-display font-semibold;
+  letter-spacing: -0.01em;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+}
+
+/* Visible focus for every interactive element — never suppressed. */
+:focus-visible {
+  outline: 3px solid theme('colors.folly.DEFAULT');
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Respect reduced-motion: neutralize transitions/animations globally. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   Signature element — stitch line
+   The recurring "running stitch" motif (thread/needle from the brand's own
+   craft materials) used as a section divider, hover underline, or border
+   accent, instead of a plain hairline.
+   ========================================================================== */
+.stitch-divider {
+  height: 2px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    currentColor 0 10px,
+    transparent 10px 20px
+  );
+  color: theme('colors.border');
+  opacity: 1;
+}
+
+.stitch-underline {
+  position: relative;
+  text-decoration: none;
+}
+.stitch-underline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 2px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    currentColor 0 6px,
+    transparent 6px 12px
+  );
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+.stitch-underline:hover::after,
+.stitch-underline:focus-visible::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stitch-border {
+  border: 2px dashed theme('colors.border');
+}
+
+/* ==========================================================================
+   Small utility layer
+   ========================================================================== */
+.container-content {
+  @apply mx-auto w-full max-w-content px-5 sm:px-6 lg:px-8;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-sm px-5 py-3 font-body font-semibold text-sm transition-colors duration-200;
+}
+.btn-primary {
+  @apply btn bg-folly text-white hover:bg-folly-dark;
+}
+.btn-secondary {
+  @apply btn bg-white text-ink border-2 border-ink/10 hover:border-folly hover:text-folly;
+}
+.btn-whatsapp {
+  @apply btn bg-[#25D366] text-white hover:brightness-95;
+}
+
+.card {
+  @apply bg-surface rounded-md shadow-soft;
+}
+
+.eyebrow {
+  @apply font-accent font-bold uppercase tracking-wide text-xs text-byzantine;
+}

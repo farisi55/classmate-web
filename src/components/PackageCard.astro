@@ -1,0 +1,55 @@
+---
+import type { Locale, PackageTier } from '../lib/types';
+import { t, uiStrings } from '../data/ui-strings';
+import { buildWhatsAppLink } from '../data/site-config';
+
+interface Props {
+  lang: Locale;
+  pkg: PackageTier;
+}
+const { lang, pkg } = Astro.props;
+---
+
+<div class="card flex flex-col p-6 border-2 border-transparent hover:border-folly/20 transition-colors">
+  <p class="eyebrow mb-1">{t(pkg.participants, lang)}</p>
+  <h3 class="font-display text-h3 mb-3">{t(pkg.name, lang)}</h3>
+
+  <div class="mb-4">
+    <span class="font-display text-h1 text-folly">{t(pkg.price, lang)}</span>
+    <p class="text-xs text-ink-soft mt-1">{t(pkg.priceNote, lang)}</p>
+  </div>
+
+  <dl class="grid grid-cols-2 gap-2 text-xs text-ink-soft mb-4">
+    <div>
+      <dt class="font-semibold text-ink">{lang === 'id' ? 'Durasi' : 'Duration'}</dt>
+      <dd>{t(pkg.duration, lang)}</dd>
+    </div>
+    <div>
+      <dt class="font-semibold text-ink">{lang === 'id' ? 'Crew' : 'Crew'}</dt>
+      <dd>{t(pkg.crews, lang)}</dd>
+    </div>
+  </dl>
+
+  <ul class="space-y-2 mb-4 flex-1">
+    {pkg.includes.map((item) => (
+      <li class="flex items-start gap-2 text-sm">
+        <svg class="mt-0.5 shrink-0 text-kiwi" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span>{t(item, lang)}</span>
+      </li>
+    ))}
+  </ul>
+
+  {pkg.notes.length > 0 && (
+    <ul class="mb-4 space-y-1 border-t border-border pt-3">
+      {pkg.notes.map((note) => (
+        <li class="text-xs text-ink-soft">{t(note, lang)}</li>
+      ))}
+    </ul>
+  )}
+
+  <a href={buildWhatsAppLink(t(pkg.ctaMessage, lang))} target="_blank" rel="noopener" class="btn-primary w-full mt-auto">
+    {t(uiStrings.cta.pilihPaketIni, lang)}
+  </a>
+</div>

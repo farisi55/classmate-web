@@ -1,0 +1,33 @@
+---
+import type { Locale, Testimonial } from '../lib/types';
+import { t, uiStrings } from '../data/ui-strings';
+
+interface Props {
+  lang: Locale;
+  testimonial: Testimonial;
+}
+const { lang, testimonial } = Astro.props;
+---
+
+<div class="card p-6 relative">
+  {testimonial.placeholder && (
+    <span class="absolute top-3 right-3 rounded-full bg-yellow/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-ink">
+      {t(uiStrings.common.placeholderBadge, lang)}
+    </span>
+  )}
+
+  <div class="flex gap-0.5 mb-3" aria-label={`${testimonial.rating}/5`}>
+    {Array.from({ length: 5 }).map((_, i) => (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill={i < testimonial.rating ? '#F7E500' : 'none'} stroke="#F7E500" stroke-width="1.5">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      </svg>
+    ))}
+  </div>
+
+  <p class="text-sm text-ink mb-4 italic">{t(testimonial.quote, lang)}</p>
+
+  <div class="border-t border-border pt-3">
+    <p class="font-semibold text-sm">{testimonial.name}</p>
+    <p class="text-xs text-ink-soft">{t(testimonial.eventType, lang)} · {testimonial.location}, {testimonial.year}</p>
+  </div>
+</div>
