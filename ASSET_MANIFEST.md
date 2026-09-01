@@ -25,30 +25,41 @@ ditaruh, `src/styles/global.css` fallback otomatis ke `system-ui` (aman, tidak p
 
 ### Hero (Beranda)
 ```
-hero-collage.webp | webp | 1200x1200 | /public/img/hero | Kolase/foto anak-anak sedang art & craft, mengisi kotak dekoratif di hero — lihat src/components/sections/HomeContent.astro
+hero-collage.webp | webp | 1200x1200 | /src/assets/hero | Kolase/foto anak-anak sedang art & craft, mengisi kotak dekoratif di hero — lihat src/components/sections/HomeContent.astro
 ```
+Taruh 1 file apa saja (jpg/png/webp) di `src/assets/hero/` — nama file bebas, yang
+penting cuma satu file di folder itu. `lib/media.ts` otomatis mengambilnya, `astro:assets`
+otomatis resize + convert ke WebP saat build. Sampai file ini ada, beranda tetap
+menampilkan placeholder logo (tidak pernah rusak).
 
 ### Dokumentasi Aktivitas (38 folder, per `slug` di src/data/activities.ts)
-Ikuti konvensi: `activity-{slug}-1.webp`, `activity-{slug}-2.webp`, dst — maks. 300KB,
-lebar maks. 1600px. Setelah upload ke R2 & taruh path-nya di array `images` pada entri
-terkait di `src/data/activities.ts`, kartu di halaman Aktivitas otomatis menampilkan
-foto asli (menggantikan state placeholder "dokumentasi menyusul").
+Ikuti konvensi: `activity-{slug}-1.webp`, `activity-{slug}-2.webp`, dst — taruh di
+`src/assets/activities/`. Tidak perlu kompres manual ke bawah 300KB dulu — `astro:assets`
+otomatis resize ke lebar maks. 1600px dan convert ke WebP saat build (lihat
+`src/lib/media.ts`); cukup hindari commit foto mentah kamera (6–7MB) langsung, turunkan
+dulu ke ukuran wajar (≤2500px sisi terpanjang) supaya repo tidak membengkak. Tidak ada
+langkah edit kode — begitu file dengan nama yang cocok muncul di folder ini, kartu di
+halaman Aktivitas otomatis menampilkan foto asli (menggantikan state placeholder
+"dokumentasi menyusul").
 
 Contoh 3 aktivitas pertama untuk memulai:
 ```
-activity-painting-pot-planting-1.webp | webp | 1600x1200 | /public/img/activities | Dokumentasi Painting Pot & Planting — sumber: Drive/Dokumentasi/[Tahun]/[Klien]/Painting Pot
-activity-slime-experience-1.webp      | webp | 1600x1200 | /public/img/activities | Dokumentasi Slime Experience
-activity-pottery-sand-art-1.webp      | webp | 1600x1200 | /public/img/activities | Dokumentasi Pottery Class — sumber: Drive/Dokumentasi/2026/Ayodhya by Alam Sutera/Pottery Class
+activity-painting-pot-planting-1.webp | webp | 1600x1200 | /src/assets/activities | Dokumentasi Painting Pot & Planting — sumber: Drive/Dokumentasi/[Tahun]/[Klien]/Painting Pot
+activity-slime-experience-1.webp      | webp | 1600x1200 | /src/assets/activities | Dokumentasi Slime Experience
+activity-pottery-sand-art-1.webp      | webp | 1600x1200 | /src/assets/activities | Dokumentasi Pottery Class — sumber: Drive/Dokumentasi/2026/Ayodhya by Alam Sutera/Pottery Class
 ```
 (35 aktivitas sisanya mengikuti pola yang sama.)
 
 ### Logo Klien & Venue (29 total — lihat src/data/testimonials-clients.ts)
-Tiap entri saat ini `logoSrc: null` dan tampil sebagai wordmark teks. Kirim logo asli
-(idealnya PNG transparan atau SVG) untuk klien/venue yang ingin ditampilkan dengan
-logo asli, lalu isi `logoSrc` dengan path-nya, contoh:
+Tiap entri saat ini tampil sebagai wordmark teks (belum ada file logo). Kirim logo asli
+dalam **PNG transparan** (bukan SVG — lihat catatan di `src/lib/media.ts`) untuk
+klien/venue yang ingin ditampilkan dengan logo asli, beri nama file sesuai nama
+klien/venue yang sudah di-slug-kan, taruh di `src/assets/logos/clients/` atau
+`src/assets/logos/venues/`. Tidak perlu edit `testimonials-clients.ts` — pencocokan nama
+file → entri terjadi otomatis. Contoh:
 ```
-client-paramount-land.png | png | 400x200 | /public/img/logos/clients | Logo Paramount Land
-venue-novotel-tangerang.png | png | 400x200 | /public/img/logos/venues | Logo Novotel Tangerang
+client-paramount-land.png | png | 400x200 | /src/assets/logos/clients | Logo Paramount Land
+venue-novotel-tangerang.png | png | 400x200 | /src/assets/logos/venues | Logo Novotel Tangerang
 ```
 
 ## Konten teks yang masih dibutuhkan (bukan gambar)

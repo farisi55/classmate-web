@@ -21,9 +21,9 @@ tidak pernah rusak karena API belum di-setup.
 
 Sebelum go-live publik, cek `ASSET_MANIFEST.md` untuk daftar lengkap — ringkasnya:
 1. Font **Human Sans** (4 file `.woff2`) — belum ada, fallback ke `system-ui` sementara
-2. Foto dokumentasi 38 aktivitas + hero — placeholder aktif sampai foto asli di-upload
+2. Foto dokumentasi 38 aktivitas + hero — taruh di `src/assets/activities/` & `src/assets/hero/` (lihat konvensi nama file di `ASSET_MANIFEST.md`); placeholder aktif sampai foto asli ditambahkan
 3. Testimoni asli (3 minimum, perlu consent form) — placeholder ditandai jelas di UI
-4. Logo klien/venue asli (opsional — tampil wordmark teks jika kosong)
+4. Logo klien/venue asli — taruh di `src/assets/logos/{clients,venues}/` (opsional — tampil wordmark teks jika kosong)
 5. Angka DP & batas waktu di halaman Syarat & Ketentuan (`[PLACEHOLDER]` di kode)
 6. Lisensi font **Bolden Van** tidak jadi dipakai — sudah diganti Fredoka/Baloo 2 (aman, lihat knowledge.md)
 
@@ -58,16 +58,21 @@ sesuai keputusan di brief.
 > `npx wrangler pages deploy dist`. Jangan gunakan `npx wrangler deploy` karena ini
 > mencoba meng-deploy Worker entrypoint, bukan direktori Pages statis.
 
-### 3. Buat KV namespace & R2 bucket (untuk Fase 2)
+### 3. Buat KV namespace (untuk Fase 2)
 ```bash
 npx wrangler kv namespace create CLASSMATE_KV
-npx wrangler r2 bucket create classmate-assets
 ```
-Salin `id` yang muncul dari perintah pertama ke `wrangler.toml`, ganti
+Salin `id` yang muncul dari perintah di atas ke `wrangler.toml`, ganti
 `REPLACE_WITH_REAL_KV_NAMESPACE_ID`. Lalu di dashboard project Pages kamu →
-**Settings → Functions** → tambahkan binding yang sama (KV: `CLASSMATE_KV`,
-R2: `CLASSMATE_ASSETS`) supaya berlaku di environment production Pages
-(wrangler.toml saja tidak otomatis ke-pickup oleh Pages dashboard build).
+**Settings → Functions** → tambahkan binding yang sama (KV: `CLASSMATE_KV`)
+supaya berlaku di environment production Pages (wrangler.toml saja tidak
+otomatis ke-pickup oleh Pages dashboard build).
+
+> Tidak perlu bucket R2 — foto aktivitas & logo klien/venue di-commit ke
+> `src/assets/` dan diproses otomatis (resize + WebP) oleh `astro:assets`
+> saat build. Lihat `ASSET_MANIFEST.md` untuk konvensi nama file. Kalau
+> project ini sebelumnya sudah punya bucket `classmate-assets` di dashboard
+> Cloudflare, aman dihapus — tidak ada kode yang membacanya.
 
 ### 4. Isi KV dengan pesan ticker awal (sekali saja, manual)
 ```bash

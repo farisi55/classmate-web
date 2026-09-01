@@ -107,9 +107,24 @@ export default function ActivityExplorer({ activities, lang, strings }: Props) {
               </ul>
             )}
 
-            {active.images.length === 0 && (
+            {active.images.length === 0 ? (
               <div className="stitch-border rounded-sm p-4 text-center text-xs text-ink-soft mb-4">
                 {strings.dokumentasiSegera}
+              </div>
+            ) : (
+              <div className="flex gap-2 overflow-x-auto mb-4 snap-x snap-mandatory" role="group" aria-label={strings.lihatDokumentasi}>
+                {active.images.map((img, i) => (
+                  <img
+                    key={img.src}
+                    src={img.src}
+                    width={img.width}
+                    height={img.height}
+                    alt={`${lang === 'id' ? active.name.id : active.name.en} ${i + 1}`}
+                    className="h-40 w-auto flex-none rounded-sm object-cover snap-start"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ))}
               </div>
             )}
 

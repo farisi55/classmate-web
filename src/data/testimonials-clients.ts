@@ -1,4 +1,5 @@
-import type { Testimonial } from '../lib/types';
+import type { Testimonial, LogoEntry } from '../lib/types';
+import { clientLogo, venueLogo } from '../lib/media';
 
 /** Fase 1: structure only, per PRD §5 Feature "Testimoni" AC — placeholder
  * content must be clearly marked as a sample, never presented as if real,
@@ -48,39 +49,44 @@ export const testimonials: Testimonial[] = [
 ];
 
 /** Source: 2026 pricelist "Our Client" / "Venue Collaboration". `logoSrc`
- * is null until a real vector/PNG logo file is supplied per client — see
- * ASSET_MANIFEST.md. Rendered as a clean text wordmark placeholder until then. */
-export const clientLogos: { name: string; logoSrc: string | null }[] = [
-  { name: 'Mooi Heartmade', logoSrc: null },
-  { name: 'sekolah.mu', logoSrc: null },
-  { name: 'Paramount Land', logoSrc: null },
-  { name: 'Antasari Place', logoSrc: null },
-  { name: 'Ciputra', logoSrc: null },
-  { name: 'NaturaCity Developments', logoSrc: null },
-  { name: 'Triniti Land', logoSrc: null },
-  { name: 'AstraLand Indonesia', logoSrc: null },
-  { name: 'Asy-Syukriyyah Islamic School', logoSrc: null },
-  { name: 'Gardens at Candi Sawangan', logoSrc: null },
-  { name: 'GBP Green Rentals Park', logoSrc: null },
-  { name: 'Uniqlo Fitfest 2025', logoSrc: null },
-  { name: 'Telaga Kahuripan', logoSrc: null },
-  { name: 'PutaNutu Resort Residence', logoSrc: null },
-  { name: 'Asthara Skyfront City', logoSrc: null },
+ * is resolved below from src/assets/logos/{clients,venues}/ (see
+ * lib/media.ts) once a real vector/PNG logo file is supplied per client —
+ * see ASSET_MANIFEST.md. Renders as a clean text wordmark placeholder
+ * until then, same as before. */
+const CLIENT_NAMES = [
+  'Mooi Heartmade',
+  'sekolah.mu',
+  'Paramount Land',
+  'Antasari Place',
+  'Ciputra',
+  'NaturaCity Developments',
+  'Triniti Land',
+  'AstraLand Indonesia',
+  'Asy-Syukriyyah Islamic School',
+  'Gardens at Candi Sawangan',
+  'GBP Green Rentals Park',
+  'Uniqlo Fitfest 2025',
+  'Telaga Kahuripan',
+  'PutaNutu Resort Residence',
+  'Asthara Skyfront City',
 ];
 
-export const venueLogos: { name: string; logoSrc: string | null }[] = [
-  { name: 'The Bucketlist Kitchen', logoSrc: null },
-  { name: 'Wuffy Space Raya', logoSrc: null },
-  { name: 'Novotel Tangerang', logoSrc: null },
-  { name: 'Mercure Hotels Serpong Alam Sutera', logoSrc: null },
-  { name: 'Main Sama Pelant', logoSrc: null },
-  { name: 'Sumbaga Bistro', logoSrc: null },
-  { name: 'Mo.joke Community', logoSrc: null },
-  { name: 'Swiss-Belhotel Serpong South Tangerang', logoSrc: null },
-  { name: 'Atria Gading Serpong', logoSrc: null },
-  { name: "Bigland Bogor Hotel Int'l & Convention Hall", logoSrc: null },
-  { name: 'The Bigboundib', logoSrc: null },
-  { name: 'South78', logoSrc: null },
-  { name: 'Bogor Creative Center', logoSrc: null },
-  { name: 'Ramada by Wyndham Serpong', logoSrc: null },
+const VENUE_NAMES = [
+  'The Bucketlist Kitchen',
+  'Wuffy Space Raya',
+  'Novotel Tangerang',
+  'Mercure Hotels Serpong Alam Sutera',
+  'Main Sama Pelant',
+  'Sumbaga Bistro',
+  'Mo.joke Community',
+  'Swiss-Belhotel Serpong South Tangerang',
+  'Atria Gading Serpong',
+  "Bigland Bogor Hotel Int'l & Convention Hall",
+  'The Bigboundib',
+  'South78',
+  'Bogor Creative Center',
+  'Ramada by Wyndham Serpong',
 ];
+
+export const clientLogos: LogoEntry[] = CLIENT_NAMES.map((name) => ({ name, logoSrc: clientLogo(name) }));
+export const venueLogos: LogoEntry[] = VENUE_NAMES.map((name) => ({ name, logoSrc: venueLogo(name) }));

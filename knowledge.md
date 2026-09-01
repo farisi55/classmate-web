@@ -24,8 +24,8 @@ simple_mode: true
 - Frameworks: Astro 4.x (islands architecture), Tailwind CSS 3.x, React 18 (islands)
 - Database: Cloudflare KV — khusus konten ticker. Bukan relational DB.
 - Static content (bukan "database"): Astro Content Collections (JSON/YAML) untuk packages, activities, testimonials, clients-venues
-- Storage: Cloudflare R2 (bucket `classmate-assets`) — gambar kurasi WebP, <300KB
-- Infrastructure: Cloudflare Pages + Pages Functions + R2 + Cloudflare Access — 100% free tier, tanpa biaya sedikit pun
+- Storage: tidak ada object storage terpisah — gambar (foto aktivitas, logo klien/venue, hero) di-commit ke `src/assets/` dan diproses `astro:assets` (Sharp) saat build, jadi bagian dari static output. R2 dihapus dari stack (lihat keputusan #5 di §3) karena tidak ada kebutuhan runtime dinamis untuk gambar ini.
+- Infrastructure: Cloudflare Pages + Pages Functions + Cloudflare Access — 100% free tier, tanpa biaya sedikit pun, tanpa perlu R2 (dihapus dari stack, lihat §3 keputusan #5)
 - Container orchestration: none (edge/serverless)
 - Key third-party services: Google Drive (arsip foto mentah — tidak diakses live oleh aplikasi)
 - Dependency/package manager: `[ASSUMED — belum dinyatakan di PRD]` npm dengan lockfile (`package-lock.json`) committed
@@ -61,7 +61,7 @@ simple_mode: true
   2. Cloudflare KV over relational database (D1/Postgres) — satu-satunya data dinamis adalah ≤3 pesan ticker; KV cukup, tetap free tier.
   3. Cloudflare Access over custom auth — gerbang login admin aman tanpa membangun & merawat sistem auth sendiri, tetap gratis (≤50 user).
   4. Content Collections (file-based) over headless CMS — konten paket/aktivitas jarang berubah, lebih aman lewat git (versioning, review) dibanding dependency CMS.
-  5. R2 (kurasi) + Google Drive (arsip) over hotlink langsung dari Drive — foto mentah 6–7MB tidak layak tayang langsung; butuh foto teroptimasi tanpa kehilangan arsip asli.
+  5. **[SUPERSEDED 2026-09]** ~~R2 (kurasi) + Google Drive (arsip) over hotlink langsung dari Drive~~ — R2 di-enable dengan billing aktif meski masih $0, dan tidak pernah benar-benar dipakai di kode (bucket dideklarasikan tapi nol referensi di `functions/`/`src/`). Diganti: **`src/assets/` + astro:assets (Sharp) over R2** — total volume gambar (38 aktivitas × 2–3 foto + 29 logo, semua <300KB) hanya puluhan MB, muat wajar di git dan di batas file Cloudflare Pages (25MB/file, 20.000 file/deployment). Foto mentah 6–7MB tetap diarsipkan di Google Drive seperti sebelumnya; hanya foto kurasi yang sekarang lewat git + build pipeline, bukan bucket terpisah. Ini konsisten dengan keputusan #4 (Content Collections over CMS) — gambar jarang berubah, lebih aman lewat git/versioning daripada storage service tambahan.
 
 ## 4. Code Standards
 - Files: kebab-case (`activity-card.astro`)
@@ -148,7 +148,7 @@ Entity: TickerMessage (item dalam array, disimpan dalam 1 KV key "ticker:message
 - Versioning aplikasi: `[ASSUMED]` semver ringan di `package.json`
 
 ## 8. Environment & Configuration
-- Required env vars: `CLASSMATE_KV` (KV namespace binding), `CLASSMATE_ASSETS` (R2 bucket binding)
+- Required env vars: `CLASSMATE_KV` (KV namespace binding) — no `CLASSMATE_ASSETS`/R2 binding anymore
 - Feature flags: none Fase 1; `[ASSUMED]` `ENABLE_ADMIN_PANEL` Fase 2 untuk soft-launch bertahap
 - Observability:
   - Logging: Cloudflare Workers Logs (dashboard bawaan)

@@ -11,14 +11,15 @@ directory = "./dist"
 # For the current deploy configuration, `npx wrangler deploy` will now use dist as assets source.
 
 # knowledge.md §8 — Required env vars / bindings.
-# Both IDs below are placeholders: create the KV namespace and R2 bucket in the
-# Cloudflare dashboard (or via `wrangler kv namespace create` / `wrangler r2 bucket
-# create`) first, then paste the real IDs here — see README.md "Deploy" section.
+# The id below is a placeholder: create the KV namespace in the Cloudflare
+# dashboard (or via `wrangler kv namespace create`) first, then paste the
+# real id here — see README.md "Deploy" section.
+#
+# R2 (CLASSMATE_ASSETS) has been removed — activity photos and client/venue
+# logos now ship as static build assets via astro:assets (src/assets/) so
+# the whole stack stays on the free tier with no bucket to manage. See
+# ASSET_MANIFEST.md and knowledge.md §3 for the current approach.
 
 [[kv_namespaces]]
 binding = "CLASSMATE_KV"
 id = "87b5fe2bd58c4bb38e82008bfac5cd50"
-
-[[r2_buckets]]
-binding = "CLASSMATE_ASSETS"
-bucket_name = "classmate-assets"

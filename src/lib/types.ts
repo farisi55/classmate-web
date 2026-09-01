@@ -1,3 +1,6 @@
+import type { ImageMetadata } from 'astro';
+import type { OptimizedImage } from './media';
+
 export type Locale = 'id' | 'en';
 
 /** A string that must be authored in both languages side by side, per
@@ -32,9 +35,11 @@ export interface Activity {
   summary: Localized;
   includes: Localized[];
   minParticipants?: number;
-  /** Filled in once real documentation photos are curated to R2 — see
-   * ASSET_MANIFEST.md. Left empty renders the placeholder state. */
-  images: string[];
+  /** Resolved + WebP-optimized at build time from src/assets/activities/
+   * via lib/media.ts — see ASSET_MANIFEST.md for the filename convention.
+   * Empty until real documentation photos are added; the UI renders a
+   * placeholder state for that case. */
+  images: OptimizedImage[];
   driveFolderHint: Localized;
 }
 
@@ -51,9 +56,10 @@ export interface Testimonial {
 
 export interface LogoEntry {
   name: string;
-  /** Path under /public/img once the real vector/PNG logo is supplied —
-   * left null renders a clean text wordmark placeholder instead. */
-  logoSrc: string | null;
+  /** Resolved at build time from src/assets/logos/{clients,venues}/ via
+   * lib/media.ts — left null renders a clean text wordmark placeholder
+   * instead, same as before. */
+  logoSrc: ImageMetadata | null;
 }
 
 export interface TickerMessage {
