@@ -13,21 +13,33 @@ simple_mode: false
 >
 > Proyek ini **existing**, bukan proyek baru — mayoritas fitur P0 (situs bilingual, Activity Explorer, kartu paket, social proof wall, ticker) sudah berjalan di produksi. Task di bawah adalah **kerja yang tersisa** (tooling, testing, integrasi backup, hardening, deployment gate) — bukan membangun ulang yang sudah ada. Task #001 karena itu adalah **"Environment Audit & Security Baseline"**, sesuai aturan template untuk existing project, bukan scaffolding dari nol.
 
-## [IN PROGRESS]
+## [COMPLETED]
 
-### Task #001 — Environment Audit & Security Baseline
-- **Phase:** Phase 1 — Foundation
-- **Scope:** Audit kondisi repo existing (`.gitignore`, env var/binding yang benar-benar dipakai, ada-tidaknya secret tertulis di kode) sebagai baseline sebelum task tooling/hardening lain dimulai.
-- **Files to create / modify:** `.gitignore` (root — pastikan `.env`, `*.pem`, `*.key`, `*.p12`, `secrets/` ada), `docs/audit-baseline.md` (baru — catat temuan: binding aktual di `wrangler.toml`, hasil grep secret di kode)
-- **Acceptance criteria:**
-  - [ ] `.gitignore` mengandung `.env`, `*.pem`, `*.key`, `*.p12`, `secrets/` — ditambahkan jika belum ada
-  - [ ] Grep menyeluruh (`src/`, `functions/`, root config) untuk pola secret/token hardcoded menghasilkan nol temuan, didokumentasikan di `docs/audit-baseline.md`
-- **Dependencies:** none
-- **Decisions made:** (fill after execution — never leave blank)
+### Task #001 — Environment Audit & Security Baseline ✅
+- **Completed:** 2026-09-03
+- **Phase:** Phase 1
+- **Status:** OK
+- **Branch:** feat/task-001-environment-audit-security-baseline
+- **Files created / modified:**
+  - `.gitignore` — added `.env`, `*.pem`, `*.key`, `*.p12`, `secrets/` patterns to prevent sensitive files from being committed
+  - `docs/audit-baseline.md` — new file documenting audit findings: zero hardcoded secrets detected, KV binding confirmed, anti-patterns documented
+- **Acceptance criteria met:**
+  - [x] `.gitignore` mengandung `.env`, `*.pem`, `*.key`, `*.p12`, `secrets/` — added all required patterns
+  - [x] Grep menyeluruh (`src/`, `functions/`, root config) untuk pola secret/token hardcoded menghasilkan nol temuan, didokumentasikan di `docs/audit-baseline.md`
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed
+- **Regression:** Phase 1 build OK
+- **Decisions made:**
+  - [ARCH] .gitignore updated as security baseline for existing project
+  - [DOC] audit-baseline.md created to document environment security audit
+- **Notes:** no deviations — clean audit, no hardcoded secrets found in codebase
+- **Knowledge drift:** none
 
 ---
 
-## [NEXT TASKS]
+## [IN PROGRESS]
+
+### Task #002 — Install & Configure Prettier
 
 ### Phase 1 — Foundation
 
