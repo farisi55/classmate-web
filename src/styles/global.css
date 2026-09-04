@@ -61,7 +61,9 @@ body {
   @apply bg-ivory text-ink font-body text-base antialiased;
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   @apply font-display font-semibold;
   letter-spacing: -0.01em;
 }
@@ -84,7 +86,9 @@ a {
 
 /* Respect reduced-motion: neutralize transitions/animations globally. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
@@ -100,11 +104,7 @@ a {
    ========================================================================== */
 .stitch-divider {
   height: 2px;
-  background-image: repeating-linear-gradient(
-    90deg,
-    currentColor 0 10px,
-    transparent 10px 20px
-  );
+  background-image: repeating-linear-gradient(90deg, currentColor 0 10px, transparent 10px 20px);
   color: theme('colors.border');
   opacity: 1;
 }
@@ -120,14 +120,12 @@ a {
   right: 0;
   bottom: -4px;
   height: 2px;
-  background-image: repeating-linear-gradient(
-    90deg,
-    currentColor 0 6px,
-    transparent 6px 12px
-  );
+  background-image: repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 12px);
   opacity: 0;
   transform: translateY(2px);
-  transition: opacity 200ms ease, transform 200ms ease;
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
 }
 .stitch-underline:hover::after,
 .stitch-underline:focus-visible::after {

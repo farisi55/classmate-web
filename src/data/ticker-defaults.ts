@@ -23,7 +23,8 @@ export const defaultTickerMessages: TickerMessage[] = [
   {
     id: 'bestseller-default',
     text_id: 'Best seller: Paket Art Party 25 Peserta — pas untuk ulang tahun & gathering kecil.',
-    text_en: 'Best seller: 25-Participant Art Party Package — a fit for birthdays & small gatherings.',
+    text_en:
+      'Best seller: 25-Participant Art Party Package — a fit for birthdays & small gatherings.',
     active: true,
     priority: 3,
   },

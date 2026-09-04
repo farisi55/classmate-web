@@ -88,5 +88,11 @@ const VENUE_NAMES = [
   'Ramada by Wyndham Serpong',
 ];
 
-export const clientLogos: LogoEntry[] = CLIENT_NAMES.map((name) => ({ name, logoSrc: clientLogo(name) }));
-export const venueLogos: LogoEntry[] = VENUE_NAMES.map((name) => ({ name, logoSrc: venueLogo(name) }));
+export const clientLogos: LogoEntry[] = CLIENT_NAMES.map((name) => ({
+  name,
+  logoSrc: clientLogo(name),
+}));
+export const venueLogos: LogoEntry[] = VENUE_NAMES.map((name) => ({
+  name,
+  logoSrc: venueLogo(name),
+}));

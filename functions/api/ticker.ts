@@ -20,7 +20,8 @@ interface TickerMessage {
 const ALLOWED_ORIGIN_SUFFIX = '.pages.dev'; // tighten to the real custom domain once purchased
 
 function corsHeaders(origin: string | null): HeadersInit {
-  const allowed = origin && (origin.endsWith(ALLOWED_ORIGIN_SUFFIX) || origin.includes('localhost'));
+  const allowed =
+    origin && (origin.endsWith(ALLOWED_ORIGIN_SUFFIX) || origin.includes('localhost'));
   return {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': allowed ? origin! : '',
@@ -39,8 +40,11 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     });
   } catch (err) {
     return new Response(
-      JSON.stringify({ data: null, error: { code: 'ticker_read_failed', message: 'Could not read ticker messages.' } }),
-      { status: 500, headers: corsHeaders(origin) }
+      JSON.stringify({
+        data: null,
+        error: { code: 'ticker_read_failed', message: 'Could not read ticker messages.' },
+      }),
+      { status: 500, headers: corsHeaders(origin) },
     );
   }
 };

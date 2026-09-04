@@ -23,7 +23,7 @@ export default function ActivityExplorer({ activities, lang, strings }: Props) {
 
   const filtered = useMemo(
     () => (filter === 'semua' ? activities : activities.filter((a) => a.category === filter)),
-    [activities, filter]
+    [activities, filter],
   );
 
   const tabs: { key: Filter; label: string }[] = [
@@ -42,7 +42,9 @@ export default function ActivityExplorer({ activities, lang, strings }: Props) {
             aria-selected={filter === tab.key}
             onClick={() => setFilter(tab.key)}
             className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-              filter === tab.key ? 'bg-folly text-white' : 'bg-white border-2 border-ink/10 text-ink hover:border-folly/40'
+              filter === tab.key
+                ? 'bg-folly text-white'
+                : 'bg-white border-2 border-ink/10 text-ink hover:border-folly/40'
             }`}
           >
             {tab.label}
@@ -57,7 +59,9 @@ export default function ActivityExplorer({ activities, lang, strings }: Props) {
             onClick={() => setActive(activity)}
             className="card text-left p-5 hover:shadow-lift transition-shadow focus-visible:outline focus-visible:outline-3 focus-visible:outline-folly"
           >
-            <span className="eyebrow">{activity.category === 'inti' ? strings.aktivitasInti : strings.kelasLainnya}</span>
+            <span className="eyebrow">
+              {activity.category === 'inti' ? strings.aktivitasInti : strings.kelasLainnya}
+            </span>
             <h3 className="font-display text-lg font-semibold mt-1 mb-2">
               {lang === 'id' ? activity.name.id : activity.name.en}
             </h3>
@@ -90,11 +94,15 @@ export default function ActivityExplorer({ activities, lang, strings }: Props) {
               ×
             </button>
 
-            <span className="eyebrow">{active.category === 'inti' ? strings.aktivitasInti : strings.kelasLainnya}</span>
+            <span className="eyebrow">
+              {active.category === 'inti' ? strings.aktivitasInti : strings.kelasLainnya}
+            </span>
             <h3 id="activity-modal-title" className="font-display text-h3 font-semibold mt-1 mb-3">
               {lang === 'id' ? active.name.id : active.name.en}
             </h3>
-            <p className="text-sm text-ink-soft mb-4">{lang === 'id' ? active.summary.id : active.summary.en}</p>
+            <p className="text-sm text-ink-soft mb-4">
+              {lang === 'id' ? active.summary.id : active.summary.en}
+            </p>
 
             {active.includes.length > 0 && (
               <ul className="space-y-1 mb-4">
@@ -112,7 +120,11 @@ export default function ActivityExplorer({ activities, lang, strings }: Props) {
                 {strings.dokumentasiSegera}
               </div>
             ) : (
-              <div className="flex gap-2 overflow-x-auto mb-4 snap-x snap-mandatory" role="group" aria-label={strings.lihatDokumentasi}>
+              <div
+                className="flex gap-2 overflow-x-auto mb-4 snap-x snap-mandatory"
+                role="group"
+                aria-label={strings.lihatDokumentasi}
+              >
                 {active.images.map((img, i) => (
                   <img
                     key={img.src}
