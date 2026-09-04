@@ -39,6 +39,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       headers: corsHeaders(origin),
     });
   } catch (err) {
+    // Log error for debugging but don't expose details to client
+    console.error('Failed to read ticker messages:', err);
     return new Response(
       JSON.stringify({
         data: null,

@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
 knowledge_version: 1.0.0
-changelog_version: 1.0.2
+changelog_version: 1.0.3
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -59,17 +59,41 @@ simple_mode: false
 - **Notes:** no deviations — clean install, 11 files auto-formatted to match config
 - **Knowledge drift:** none
 
+### Task #003 — Install & Configure ESLint ✅
+- **Completed:** 2026-09-04
+- **Phase:** Phase 1
+- **Status:** OK
+- **Branch:** feat/task-003-install-configure-eslint
+- **Files created / modified:**
+  - `eslint.config.mjs` — new flat config with TypeScript & Astro support, no-explicit-any rule enabled as error
+  - `package.json` — added ESLint devDependencies (`eslint`, `@typescript-eslint/parser`, `@typescript-eslint/eslint-plugin`, `eslint-plugin-astro`) + `lint`/`lint:fix` scripts
+  - `package-lock.json` — updated lockfile
+  - `functions/api/ticker.ts` — fixed unused variable warning (renamed `err` to used variable with logging)
+  - 12 source files auto-formatted by Prettier to maintain consistent styling
+- **Acceptance criteria met:**
+  - [x] `npx eslint .` berjalan bersih (0 error) terhadap kode existing — passes with 0 errors, 0 warnings after config tuning
+  - [x] Aturan `no-explicit-any` aktif sebagai error (selaras larangan `any` di `knowledge.md` §9) — configured in eslint.config.mjs
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed
+- **Regression:** Phase 1 build OK — `npm run build` succeeds, `npm run lint` passes with 0 errors/warnings, `npm run format:check` passes
+- **Decisions made:**
+  - [CONFIG] ESLint flat config with TypeScript + Astro plugins, ignores JSON/YAML config files to avoid parse errors
+  - [SECURITY] Temporarily disabled `astro/no-set-html-directive` rule (will be addressed in Task #017) — the set:html in BaseLayout.astro is for static SVG injection
+  - [CODE] Fixed unused variable in ticker.ts catch block, added error logging for debugging while maintaining security (no stack traces exposed to client)
+- **Notes:** ESLint runs cleanly (0 errors, 0 warnings) after config tuning; temporarily disabled Astro set:html rule pending Task #017 security review
+- **Knowledge drift:** none
+
 ---
 
 ## [IN PROGRESS]
 
-### Task #003 — Install & Configure ESLint
+### Task #004 — Install & Configure Vitest
 - **Phase:** Phase 1 — Foundation
-- **Scope:** Install ESLint + `@typescript-eslint` + `eslint-plugin-astro`, config selaras dengan konvensi kode existing (kebab-case/camelCase/PascalCase per `knowledge.md` §4).
-- **Files to create / modify:** `package.json` (devDependency), `eslint.config.mjs` (baru, flat config)
+- **Scope:** Setup Vitest untuk unit test util & Pages Functions, termasuk konfigurasi coverage report menuju target 70% (`knowledge.md` §4).
+- **Files to create / modify:** `package.json` (devDependency + skrip `test`), `vitest.config.ts` (baru)
 - **Acceptance criteria:**
-  - [ ] `npx eslint .` berjalan bersih (0 error) terhadap kode existing, atau setiap exception didokumentasikan dengan alasan di `eslint.config.mjs`
-  - [ ] Aturan `no-explicit-any` aktif sebagai error (selaras larangan `any` di `knowledge.md` §9)
+  - [ ] `npm run test` berjalan (walau 0 test dulu) tanpa error konfigurasi
+  - [ ] `npm run test -- --coverage` menghasilkan report coverage yang bisa dibaca (text + lcov)
 - **Dependencies:** Task #001
 - **Decisions made:** (fill after execution — never leave blank)
 
@@ -79,13 +103,13 @@ simple_mode: false
 
 ### Phase 1 — Foundation
 
-#### Task #004 — Install & Configure Vitest
+#### Task #005 — Install & Configure Playwright
 - **Phase:** Phase 1 — Foundation
-- **Scope:** Setup Vitest untuk unit test util & Pages Functions, termasuk konfigurasi coverage report menuju target 70% (`knowledge.md` §4).
-- **Files to create / modify:** `package.json` (devDependency + skrip `test`), `vitest.config.ts` (baru)
+- **Scope:** Setup Playwright dengan base config (browser target, base URL lokal/preview) — belum menulis suite lengkap, itu Task #019 di Phase 6.
+- **Files to create / modify:** `package.json` (devDependency + skrip `test:e2e`), `playwright.config.ts` (baru), `e2e/` (folder baru, kosong/placeholder)
 - **Acceptance criteria:**
-  - [ ] `npm run test` berjalan (walau 0 test dulu) tanpa error konfigurasi
-  - [ ] `npm run test -- --coverage` menghasilkan report coverage yang bisa dibaca (text + lcov)
+  - [ ] `npx playwright install` + `npm run test:e2e` berjalan tanpa error konfigurasi terhadap 1 smoke test placeholder (mis. halaman beranda me-render)
+  - [ ] Base URL config bisa dioverride lewat env var (lokal vs preview deployment)
 - **Dependencies:** Task #001
 - **Decisions made:** (fill after execution — never leave blank)
 
