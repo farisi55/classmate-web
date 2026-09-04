@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
-knowledge_version: 1.0.0
-changelog_version: 1.0.4
+knowledge_version: 1.0.1
+changelog_version: 1.0.5
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -107,27 +107,38 @@ simple_mode: false
 - **Notes:** `npm install` sempat timeout di 240s tapi selesai (tree valid — `npm ls` bersih, build hijau). npm 11 menulis ulang `package-lock.json` dengan churn baris besar (opsional dependency hoisting); tidak ada dependensi langsung yang berubah versi. `eslint.config.mjs` & `functions/api/ticker.ts` sempat ter-flag `format:check` lokal — artifact `core.autocrlf` Windows (working copy CRLF vs blob LF), isi identik dengan HEAD, tidak ikut ter-commit.
 - **Knowledge drift:** none
 
+### Task #005 — Install & Configure Playwright ✅
+- **Completed:** 2026-09-04
+- **Phase:** Phase 1
+- **Status:** OK
+- **Branch:** feat/task-005-install-configure-playwright
+- **Files created / modified:**
+  - `package.json` — added `@playwright/test` devDependency (1.62.1) + `test:e2e` script
+  - `playwright.config.ts` — new E2E config: chromium project, base URL dioverride via `E2E_BASE_URL` env var (lokal vs preview), webServer lokal bersyarat (`npm run dev`), retries/forbidOnly sadar-CI
+  - `e2e/smoke.spec.ts` — new placeholder smoke test (beranda ID me-render); suite lengkap ditulis Task #019
+  - `e2e/` — top-level folder baru untuk spec E2E
+  - `package-lock.json` — updated lockfile (@playwright/test 1.62.1)
+  - `.gitignore` — added `test-results/` (artifact failure Playwright)
+  - `knowledge.md` — §3 folder structure + version bump (lihat Knowledge drift)
+- **Acceptance criteria met:**
+  - [x] `npx playwright install chromium` + `npm run test:e2e` berjalan hijau terhadap 1 smoke test placeholder (beranda me-render — 1 passed, 8.5s)
+  - [x] Base URL override via env `E2E_BASE_URL` terverifikasi — config yang sama menembak server live di port non-default (4999) tanpa spawn webServer lokal (1 passed, 2.0s)
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed
+- **Regression:** Phase 1 build OK — build 15 pages ✓ · lint 0 errors ✓ · format:check ✓ · `npm run test` (vitest) exit 0 ✓ · `npm run test:e2e` 1 passed ✓
+- **Decisions made:**
+  - [CONFIG] Env var bernama `E2E_BASE_URL` (default `http://localhost:4321`) — cocok dengan URL yang diiklankan Astro dev sendiri; `127.0.0.1` sengaja tidak dipakai karena Astro dev bind `::1` saja di mesin ini (ketahuan saat webServer timeout 120s)
+  - [CONFIG] `webServer` bersyarat — hanya di-spawn kalau `E2E_BASE_URL` kosong, jadi run preview/CI tidak pernah mem-boot server lokal
+  - [CONFIG] Project browser hanya chromium (target paling lean sesuai AC); browser tidak di-commit — di-install via `npx playwright install chromium`, CI (Task #006) yang handle install browser
+  - [TEST] Smoke test assert title + `main h1` — selektor stabil terhadap perubahan salinan konten
+- **Notes:** `format:check` sempat flag `vitest.config.ts` (file Task #004) — artifact CRLF lokal (blob LF, nol diff), di-write ulang ke LF, tidak ikut ter-commit
+- **Knowledge drift:** UPDATE REQUIRED: @knowledge §3 — top-level folder baru `e2e/` + root config `playwright.config.ts` ditambahkan ke folder structure (sekaligus `vitest.config.ts` yang terlewat #004) → knowledge v1.0.1
+
 ---
 
 ## [IN PROGRESS]
 
-### Task #005 — Install & Configure Playwright
-- **Phase:** Phase 1 — Foundation
-- **Scope:** Setup Playwright dengan base config (browser target, base URL lokal/preview) — belum menulis suite lengkap, itu Task #019 di Phase 6.
-- **Files to create / modify:** `package.json` (devDependency + skrip `test:e2e`), `playwright.config.ts` (baru), `e2e/` (folder baru, kosong/placeholder)
-- **Acceptance criteria:**
-  - [ ] `npx playwright install` + `npm run test:e2e` berjalan tanpa error konfigurasi terhadap 1 smoke test placeholder (mis. halaman beranda me-render)
-  - [ ] Base URL config bisa dioverride lewat env var (lokal vs preview deployment)
-- **Dependencies:** Task #001
-- **Decisions made:** (fill after execution — never leave blank)
-
----
-
-## [NEXT TASKS]
-
-### Phase 1 — Foundation
-
-#### Task #006 — Set Up CI Pipeline
+### Task #006 — Set Up CI Pipeline
 - **Phase:** Phase 1 — Foundation
 - **Scope:** GitHub Actions workflow CI: lint → type-check (`astro check`) → unit test → build, jalan tiap push/PR. **Terpisah dari** workflow backup ticker (Task #014) — dua workflow independen.
 - **Files to create / modify:** `.github/workflows/ci.yml` (baru)
@@ -136,6 +147,12 @@ simple_mode: false
   - [ ] Workflow lulus hijau di kondisi kode saat ini setelah Task #002–#005 selesai
 - **Dependencies:** Task #002, Task #003, Task #004, Task #005
 - **Decisions made:** (fill after execution — never leave blank)
+
+---
+
+## [NEXT TASKS]
+
+### Phase 1 — Foundation
 
 #### Task #007 — Pre-commit Hooks Blocking Secrets
 - **Phase:** Phase 1 — Foundation

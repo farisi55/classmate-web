@@ -2,6 +2,7 @@
 dist/
 .astro/
 coverage/
+test-results/
 .claude/
 
 # dependencies
