@@ -1,8 +1,8 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
-version: 1.0.0
+version: 1.0.1
 source: prd
-last_updated: 2026-09-03
+last_updated: 2026-09-04
 project_shape: fullstack
 simple_mode: false
 external_assets: true
@@ -51,6 +51,9 @@ external_assets: true
   ├── admin/ticker-export.ts  # GET, Access Service Token (backup)
   └── health.ts                # GET, publik
   public/img/        # logo/favicon situs sendiri saja — tidak pernah R2-backed
+  e2e/               # Playwright E2E specs — smoke placeholder sejak Phase 1, suite lengkap di Task #019
+  playwright.config.ts  # E2E runner — base URL dioverride via env E2E_BASE_URL (lokal vs preview)
+  vitest.config.ts   # unit test runner config (Vitest, Phase 1)
   astro.config.mjs    # output: 'static'
   .github/workflows/backup-ticker.yml
   ```
