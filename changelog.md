@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
 knowledge_version: 1.0.0
-changelog_version: 1.0.3
+changelog_version: 1.0.4
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -83,17 +83,41 @@ simple_mode: false
 - **Notes:** ESLint runs cleanly (0 errors, 0 warnings) after config tuning; temporarily disabled Astro set:html rule pending Task #017 security review
 - **Knowledge drift:** none
 
+### Task #004 — Install & Configure Vitest ✅
+- **Completed:** 2026-09-04
+- **Phase:** Phase 1
+- **Status:** OK
+- **Branch:** feat/task-004-install-configure-vitest
+- **Files created / modified:**
+  - `package.json` — added `vitest` + `@vitest/coverage-v8` devDependencies and `test` / `test:coverage` scripts
+  - `vitest.config.ts` — new Vitest config: node env, unit-test include scoped to `functions/**` + `src/**`, `passWithNoTests`, v8 coverage (text + lcov) restricted to `functions/**/*.ts` + `src/lib/**/*.ts`
+  - `package-lock.json` — updated lockfile with Vitest 5.0.0 tree
+  - `.gitignore` — added `coverage/` build-output pattern so coverage reports are never committed
+- **Acceptance criteria met:**
+  - [x] `npm run test` berjalan (0 test) tanpa error konfigurasi — exit code 0
+  - [x] `npm run test -- --coverage` menghasilkan report coverage yang bisa dibaca (text + lcov) — `coverage/lcov.info` + `coverage/lcov-report/` generated
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed
+- **Regression:** Phase 1 build OK — `npm run build` (astro check + 15 pages) OK, `npm run lint` 0 errors, `npm run format:check` passes
+- **Decisions made:**
+  - [CONFIG] Vitest `test.include` di-scope ke `functions/**/*.test.ts` + `src/**/*.test.ts` supaya spec Playwright di `e2e/` (Task #005/#019) tidak ikut dijalankan oleh unit runner
+  - [CONFIG] `passWithNoTests: true` sementara sampai Task #010/#011 menambah test pertama; Task #006 (CI) bisa memutuskan flip ke tegas
+  - [CONFIG] Coverage thresholds 70% sengaja belum dipasang di config — diverifikasi di Task #018; coverage `include` sudah dibatasi ke scope non-UI yang sama (`.ts` saja, supaya file non-source seperti `tsconfig.json` tidak masuk report)
+  - [INFRA] `coverage/` masuk `.gitignore` (output report = artifact lokal)
+- **Notes:** `npm install` sempat timeout di 240s tapi selesai (tree valid — `npm ls` bersih, build hijau). npm 11 menulis ulang `package-lock.json` dengan churn baris besar (opsional dependency hoisting); tidak ada dependensi langsung yang berubah versi. `eslint.config.mjs` & `functions/api/ticker.ts` sempat ter-flag `format:check` lokal — artifact `core.autocrlf` Windows (working copy CRLF vs blob LF), isi identik dengan HEAD, tidak ikut ter-commit.
+- **Knowledge drift:** none
+
 ---
 
 ## [IN PROGRESS]
 
-### Task #004 — Install & Configure Vitest
+### Task #005 — Install & Configure Playwright
 - **Phase:** Phase 1 — Foundation
-- **Scope:** Setup Vitest untuk unit test util & Pages Functions, termasuk konfigurasi coverage report menuju target 70% (`knowledge.md` §4).
-- **Files to create / modify:** `package.json` (devDependency + skrip `test`), `vitest.config.ts` (baru)
+- **Scope:** Setup Playwright dengan base config (browser target, base URL lokal/preview) — belum menulis suite lengkap, itu Task #019 di Phase 6.
+- **Files to create / modify:** `package.json` (devDependency + skrip `test:e2e`), `playwright.config.ts` (baru), `e2e/` (folder baru, kosong/placeholder)
 - **Acceptance criteria:**
-  - [ ] `npm run test` berjalan (walau 0 test dulu) tanpa error konfigurasi
-  - [ ] `npm run test -- --coverage` menghasilkan report coverage yang bisa dibaca (text + lcov)
+  - [ ] `npx playwright install` + `npm run test:e2e` berjalan tanpa error konfigurasi terhadap 1 smoke test placeholder (mis. halaman beranda me-render)
+  - [ ] Base URL config bisa dioverride lewat env var (lokal vs preview deployment)
 - **Dependencies:** Task #001
 - **Decisions made:** (fill after execution — never leave blank)
 
@@ -102,26 +126,6 @@ simple_mode: false
 ## [NEXT TASKS]
 
 ### Phase 1 — Foundation
-
-#### Task #005 — Install & Configure Playwright
-- **Phase:** Phase 1 — Foundation
-- **Scope:** Setup Playwright dengan base config (browser target, base URL lokal/preview) — belum menulis suite lengkap, itu Task #019 di Phase 6.
-- **Files to create / modify:** `package.json` (devDependency + skrip `test:e2e`), `playwright.config.ts` (baru), `e2e/` (folder baru, kosong/placeholder)
-- **Acceptance criteria:**
-  - [ ] `npx playwright install` + `npm run test:e2e` berjalan tanpa error konfigurasi terhadap 1 smoke test placeholder (mis. halaman beranda me-render)
-  - [ ] Base URL config bisa dioverride lewat env var (lokal vs preview deployment)
-- **Dependencies:** Task #001
-- **Decisions made:** (fill after execution — never leave blank)
-
-#### Task #005 — Install & Configure Playwright
-- **Phase:** Phase 1 — Foundation
-- **Scope:** Setup Playwright dengan base config (browser target, base URL lokal/preview) — belum menulis suite lengkap, itu Task #019 di Phase 6.
-- **Files to create / modify:** `package.json` (devDependency + skrip `test:e2e`), `playwright.config.ts` (baru), `e2e/` (folder baru, kosong/placeholder)
-- **Acceptance criteria:**
-  - [ ] `npx playwright install` + `npm run test:e2e` berjalan tanpa error konfigurasi terhadap 1 smoke test placeholder (mis. halaman beranda me-render)
-  - [ ] Base URL config bisa dioverride lewat env var (lokal vs preview deployment)
-- **Dependencies:** Task #001
-- **Decisions made:** (fill after execution — never leave blank)
 
 #### Task #006 — Set Up CI Pipeline
 - **Phase:** Phase 1 — Foundation
