@@ -54,11 +54,23 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
 
   const data = (body as { data?: unknown[] })?.data;
-  if (!Array.isArray(data) || data.length === 0 || data.length > 10 || !data.every(isValidMessage)) {
-    return jsonError('invalid_payload', 'Expected { data: TickerMessage[] } with 1-10 valid entries.', 400);
+  if (
+    !Array.isArray(data) ||
+    data.length === 0 ||
+    data.length > 10 ||
+    !data.every(isValidMessage)
+  ) {
+    return jsonError(
+      'invalid_payload',
+      'Expected { data: TickerMessage[] } with 1-10 valid entries.',
+      400,
+    );
   }
 
-  const withTimestamp: TickerMessage[] = data.map((m) => ({ ...m, updated_at: new Date().toISOString() }));
+  const withTimestamp: TickerMessage[] = data.map((m) => ({
+    ...m,
+    updated_at: new Date().toISOString(),
+  }));
 
   try {
     // Idempotent full overwrite (knowledge.md §7 domain rule) — safe to retry.

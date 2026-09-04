@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
 knowledge_version: 1.0.0
-changelog_version: 1.0.0
+changelog_version: 1.0.2
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -14,6 +14,7 @@ simple_mode: false
 > Proyek ini **existing**, bukan proyek baru — mayoritas fitur P0 (situs bilingual, Activity Explorer, kartu paket, social proof wall, ticker) sudah berjalan di produksi. Task di bawah adalah **kerja yang tersisa** (tooling, testing, integrasi backup, hardening, deployment gate) — bukan membangun ulang yang sudah ada. Task #001 karena itu adalah **"Environment Audit & Security Baseline"**, sesuai aturan template untuk existing project, bukan scaffolding dari nol.
 
 ## [COMPLETED]
+> Changelog v1.0.0 initialized from knowledge.md v1.0.0. Shape: fullstack. 27 task, Phase 2 tidak digenerate (Database = none).
 
 ### Task #001 — Environment Audit & Security Baseline ✅
 - **Completed:** 2026-09-03
@@ -35,25 +36,34 @@ simple_mode: false
 - **Notes:** no deviations — clean audit, no hardcoded secrets found in codebase
 - **Knowledge drift:** none
 
+### Task #002 — Install & Configure Prettier ✅
+- **Completed:** 2026-09-04
+- **Phase:** Phase 1
+- **Status:** OK
+- **Branch:** feat/task-002-install-configure-prettier
+- **Files created / modified:**
+  - `.prettierrc.json` — new config: singleQuote, trailingComma all, printWidth 100, semicolons, LF endings
+  - `.prettierignore` — new file excluding dist/, src/assets/, public/, node_modules/, and non-source files
+  - `package.json` — added `prettier` devDependency + `format`/`format:check` scripts
+  - `package-lock.json` — updated lockfile
+  - 11 source files reformatted to match Prettier config (functions/api/, src/components/, src/data/, src/lib/, src/styles/)
+- **Acceptance criteria met:**
+  - [x] `npx prettier --check .` runs without config errors against entire source tree
+  - [x] `format`/`format:check` scripts added to `package.json` and verified working
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed
+- **Regression:** Build OK (15 pages built successfully); `npm run format:check` passes after formatting
+- **Decisions made:**
+  - [CONFIG] Prettier config: singleQuote, trailingComma all, printWidth 100, endOfLine lf — matches existing code conventions
+  - [CONFIG] .prettierignore excludes dist/, src/assets/, public/, node_modules/, and non-source files (md, json, yml)
+- **Notes:** no deviations — clean install, 11 files auto-formatted to match config
+- **Knowledge drift:** none
+
 ---
 
 ## [IN PROGRESS]
 
-### Task #002 — Install & Configure Prettier
-
-### Phase 1 — Foundation
-
-#### Task #002 — Install & Configure Prettier
-- **Phase:** Phase 1 — Foundation
-- **Scope:** Install Prettier dan set konfigurasi dasar konsisten dengan konvensi existing (kebab-case file, tanpa mengubah gaya kode besar-besaran dalam satu commit).
-- **Files to create / modify:** `package.json` (devDependency), `.prettierrc.json` (baru), `.prettierignore` (baru — exclude `dist/`, `src/assets/`)
-- **Acceptance criteria:**
-  - [ ] `npx prettier --check .` berjalan tanpa error konfigurasi terhadap seluruh source tree
-  - [ ] Skrip `format`/`format:check` ditambahkan ke `package.json`
-- **Dependencies:** Task #001
-- **Decisions made:** (fill after execution — never leave blank)
-
-#### Task #003 — Install & Configure ESLint
+### Task #003 — Install & Configure ESLint
 - **Phase:** Phase 1 — Foundation
 - **Scope:** Install ESLint + `@typescript-eslint` + `eslint-plugin-astro`, config selaras dengan konvensi kode existing (kebab-case/camelCase/PascalCase per `knowledge.md` §4).
 - **Files to create / modify:** `package.json` (devDependency), `eslint.config.mjs` (baru, flat config)
@@ -62,6 +72,12 @@ simple_mode: false
   - [ ] Aturan `no-explicit-any` aktif sebagai error (selaras larangan `any` di `knowledge.md` §9)
 - **Dependencies:** Task #001
 - **Decisions made:** (fill after execution — never leave blank)
+
+---
+
+## [NEXT TASKS]
+
+### Phase 1 — Foundation
 
 #### Task #004 — Install & Configure Vitest
 - **Phase:** Phase 1 — Foundation
@@ -327,8 +343,3 @@ simple_mode: false
   - [ ] Tiap endpoint di dokumen diuji manual sekali terhadap server preview, response aktual cocok dengan skema yang didokumentasikan
 - **Dependencies:** Task #012
 - **Decisions made:** (fill after execution — never leave blank)
-
----
-
-## [COMPLETED]
-> Changelog v1.0.0 initialized from knowledge.md v1.0.0. Shape: fullstack. 27 task, Phase 2 tidak digenerate (Database = none).
