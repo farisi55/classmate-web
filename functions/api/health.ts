@@ -8,6 +8,22 @@ interface Env {
 }
 
 export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
+  // Fail fast with a clear error if the KV binding is missing from the
+  // environment — e.g. local wrangler dev without the binding configured.
+  // Cloudflare Workers throws TypeError when a declared binding is absent.
+  if (!env.CLASSMATE_KV) {
+    return new Response(
+      JSON.stringify({
+        data: null,
+        error: {
+          code: 'kv_binding_missing',
+          message: 'KV binding CLASSMATE_KV is not configured.',
+        },
+      }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
   let kv_reachable = false;
 
   try {
