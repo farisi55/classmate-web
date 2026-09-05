@@ -41,6 +41,11 @@ function isValidMessage(m: unknown): m is TickerMessage {
 }
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+  // Fail fast if the KV binding is missing from the environment.
+  if (!env.CLASSMATE_KV) {
+    return jsonError('kv_binding_missing', 'KV binding CLASSMATE_KV is not configured.', 500);
+  }
+
   // Fail closed if Cloudflare Access hasn't been put in front of this route.
   if (!request.headers.get('Cf-Access-Jwt-Assertion')) {
     return jsonError('unauthorized', 'This endpoint must be placed behind Cloudflare Access.', 401);

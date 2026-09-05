@@ -31,6 +31,21 @@ function corsHeaders(origin: string | null): HeadersInit {
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const origin = request.headers.get('Origin');
+
+  // Fail fast if the KV binding is missing from the environment.
+  if (!env.CLASSMATE_KV) {
+    return new Response(
+      JSON.stringify({
+        data: null,
+        error: {
+          code: 'kv_binding_missing',
+          message: 'KV binding CLASSMATE_KV is not configured.',
+        },
+      }),
+      { status: 500, headers: corsHeaders(origin) },
+    );
+  }
+
   try {
     const raw = await env.CLASSMATE_KV.get('ticker:messages');
     const data: TickerMessage[] = raw ? JSON.parse(raw) : [];
