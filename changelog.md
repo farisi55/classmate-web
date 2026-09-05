@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
 knowledge_version: 1.0.1
-changelog_version: 1.0.5
+changelog_version: 1.0.6
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -138,23 +138,7 @@ simple_mode: false
 
 ## [IN PROGRESS]
 
-### Task #006 — Set Up CI Pipeline
-- **Phase:** Phase 1 — Foundation
-- **Scope:** GitHub Actions workflow CI: lint → type-check (`astro check`) → unit test → build, jalan tiap push/PR. **Terpisah dari** workflow backup ticker (Task #014) — dua workflow independen.
-- **Files to create / modify:** `.github/workflows/ci.yml` (baru)
-- **Acceptance criteria:**
-  - [ ] Workflow gagal (exit non-zero) kalau lint, type-check, atau test gagal — diverifikasi dengan sengaja merusak satu langkah lalu memastikan CI merah
-  - [ ] Workflow lulus hijau di kondisi kode saat ini setelah Task #002–#005 selesai
-- **Dependencies:** Task #002, Task #003, Task #004, Task #005
-- **Decisions made:** (fill after execution — never leave blank)
-
----
-
-## [NEXT TASKS]
-
-### Phase 1 — Foundation
-
-#### Task #007 — Pre-commit Hooks Blocking Secrets
+### Task #007 — Pre-commit Hooks Blocking Secrets
 - **Phase:** Phase 1 — Foundation
 - **Scope:** Pasang pre-commit hook (format + lint staged files, tolak commit yang menyertakan `.env`).
 - **Files to create / modify:** `package.json` (devDependency `husky` + `lint-staged`), `.husky/pre-commit` (baru)
@@ -163,6 +147,12 @@ simple_mode: false
   - [ ] Percobaan commit dengan kode yang melanggar Prettier/ESLint diblokir atau auto-fix sebelum commit selesai
 - **Dependencies:** Task #002, Task #003
 - **Decisions made:** (fill after execution — never leave blank)
+
+---
+
+## [NEXT TASKS]
+
+### Phase 1 — Foundation
 
 #### Task #008 — Implement Health Check Endpoint
 - **Phase:** Phase 1 — Foundation
