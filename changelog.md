@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
 knowledge_version: 1.0.2
-changelog_version: 1.0.9
+changelog_version: 1.0.10
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -226,27 +226,33 @@ simple_mode: false
 
 ---
 
-## [IN PROGRESS]
-
-### Phase 3 — Core Features
-
-#### Task #010 — Unit Tests for Ticker POST Validation Logic
-- **Phase:** Phase 3 — Core Features
-- **Scope:** Tulis unit test untuk validasi payload di `POST /api/admin/ticker` (array 1–10 item, tiap item type-checked terhadap skema `TickerMessage`) — logic ini ditandai high-blast-radius di `knowledge.md` §9, saat ini nol test.
-- **Files to create / modify:** `functions/api/admin/ticker.test.ts` (baru)
-- **Acceptance criteria:**
-  - [ ] Payload valid (1–10 item lengkap) lolos validasi
-  - [ ] Payload invalid (11 item, field `text_id`/`text_en` hilang, tipe salah) ditolak dengan `{ error: { code, message } }`, KV tidak tertulis
-  - [ ] Unit test written and passing for new logic
-  - [ ] Test is isolated: sets up and tears down its own state (mock KV per test, tanpa state bocor antar test)
-- **Dependencies:** Task #004
-- **Decisions made:** (fill after execution — never leave blank)
+### Task #010 — Unit Tests for Ticker POST Validation Logic ✅
+- **Completed:** 2026-09-06
+- **Phase:** Phase 3
+- **Status:** OK
+- **Branch:** feat/task-010-unit-tests-ticker-post-validation
+- **Files created / modified:**
+  - `functions/api/admin/ticker.test.ts` — new file, 26 isolated unit tests covering payload validation logic for `POST /api/admin/ticker`
+- **Acceptance criteria met:**
+  - [x] Payload valid (1–10 item lengkap) lolos validasi — tested: single message, 10 messages (max), priority edge cases (0, negative, large)
+  - [x] Payload invalid (11 item, field `text_id`/`text_en` hilang, tipe salah) ditolak dengan `{ error: { code, message } }`, KV tidak tertulis — tested: empty array, 11 items, missing data field, non-array data, null data, missing each required field (id/text_id/text_en/active/priority), wrong types (number for string, string for boolean, string for number, null for boolean), non-object/null in array, mixed valid-invalid array, malformed JSON
+  - [x] Unit test written and passing for new logic
+  - [x] Test is isolated: sets up and tears down its own state (mock KV per test, tanpa state bocor antar test)
+- **Security gate:** STANDARD — all checks passed
+- **Scalability gate:** STANDARD — all checks passed
+- **Regression:** Passed 33 (26 new + 7 existing), 0 failed
+- **Decisions made:**
+  - [TEST] Tests call the handler directly via dynamic `import('./ticker')` (relative to test file in `admin/` subfolder) with a mocked `KVNamespace` — avoids needing a running server, keeps tests fast and isolated; the `put` mock verifies KV is written on success and NOT called on rejection
+  - [TEST] Used `validMessage()` factory function with `Partial` overrides + `delete` on `Record<string, unknown>` to produce invalid variants — avoids repetitive object literals and makes each "missing field" test read as a single intent line
+  - [TEST] Type-mismatch tests use `as unknown as X` casts to produce values that TypeScript would normally reject — tests the runtime validation (`typeof` checks in `isValidMessage`), not the compile-time type system
+  - [TEST] Extra-fields test confirms validation is per-required-field (not strict object shape) — matches the actual `isValidMessage` implementation which only checks required fields exist with correct types, ignoring extras
+  - [TEST] Auth-check-order test verifies 401 is returned before payload validation runs — confirms defense-in-depth ordering; the handler checks JWT before touching the body, so even a valid payload is rejected without auth
+- **Notes:** no deviations — clean implementation, 26/26 tests pass, lint 0 errors/warnings, format:check passes, build 15 pages OK; existing health tests (7) continue to pass with no regressions; pre-commit hook auto-fixed formatting via lint-staged
+- **Knowledge drift:** none
 
 ---
 
-## [NEXT TASKS]
-
-### Phase 1 — Foundation
+## [IN PROGRESS]
 
 ### Phase 3 — Core Features
 
@@ -261,6 +267,14 @@ simple_mode: false
   - [ ] Test is isolated: sets up and tears down its own state (fixture folder sementara per test, dibersihkan setelahnya)
 - **Dependencies:** Task #004
 - **Decisions made:** (fill after execution — never leave blank)
+
+---
+
+## [NEXT TASKS]
+
+### Phase 1 — Foundation
+
+### Phase 3 — Core Features
 
 #### Task #012 — Implement Ticker Export Endpoint
 - **Phase:** Phase 3 — Core Features
