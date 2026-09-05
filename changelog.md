@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
 knowledge_version: 1.0.2
-changelog_version: 1.0.7
+changelog_version: 1.0.9
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -178,35 +178,55 @@ simple_mode: false
 
 ---
 
-## [IN PROGRESS]
+### Task #008 — Implement Health Check Endpoint ✅
+- **Completed:** 2026-09-06
+- **Phase:** Phase 1
+- **Status:** OK
+- **Branch:** feat/task-008-implement-health-check-endpoint
+- **Files created / modified:**
+  - `functions/api/health.ts` — new public GET endpoint returning `{ status, kv_reachable }`, probes KV with cheap read on `ticker:messages`
+  - `functions/api/health.test.ts` — new isolated unit tests (3 tests: KV reachable, KV unreachable, no internal details leaked in degraded response)
+- **Acceptance criteria met:**
+  - [x] `GET /api/health` mengembalikan `200` dengan `{ status: "ok", kv_reachable: true }` saat KV bisa diakses
+  - [x] Simulasi KV tidak terjangkau menghasilkan `{ status: "degraded", kv_reachable: false }`, bukan crash/500 tanpa body
+  - [x] Unit test written and passing for new logic
+  - [x] Test is isolated: sets up and tears down its own state
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed
+- **Regression:** Phase 1 build OK + Passed 3
+- **Decisions made:**
+  - [CODE] Reused existing `ticker.ts` patterns (same `Env` interface, same `KVNamespace` shape, same response envelope philosophy)
+  - [CODE] Deliberately returns 200 even when KV is down so monitors distinguish "app alive, backend degraded" from crash — consistent with knowledge.md §8 health check design
+- **Notes:** no deviations — clean implementation, 3/3 tests pass, lint 0 errors, format:check passes, build 15 pages OK
+- **Knowledge drift:** none
 
-### Task #008 — Implement Health Check Endpoint
-- **Phase:** Phase 1 — Foundation
-- **Scope:** `GET /api/health` publik, baca ringan dari KV, kembalikan `{ status, kv_reachable }` sesuai `knowledge.md` §5/§8 — tanpa expose detail internal.
-- **Files to create / modify:** `functions/api/health.ts` (baru)
-- **Acceptance criteria:**
-  - [ ] `GET /api/health` mengembalikan `200` dengan `{ status: "ok", kv_reachable: true }` saat KV bisa diakses
-  - [ ] Simulasi KV tidak terjangkau (mis. mock binding gagal) menghasilkan `{ status: "degraded", kv_reachable: false }`, bukan crash/500 tanpa body
-  - [ ] Unit test written and passing for new logic
-  - [ ] Test is isolated: sets up and tears down its own state
-- **Dependencies:** Task #001
-- **Decisions made:** (fill after execution — never leave blank)
+### Task #009 — Add Startup Env Var Validation ✅
+- **Completed:** 2026-09-06
+- **Phase:** Phase 1
+- **Status:** OK
+- **Branch:** feat/task-009-add-startup-env-var-validation
+- **Files created / modified:**
+  - `functions/api/health.ts` — added KV binding guard clause at top of handler
+  - `functions/api/ticker.ts` — added KV binding guard clause at top of handler
+  - `functions/api/admin/ticker.ts` — added KV binding guard clause before Access JWT check
+  - `functions/api/health.test.ts` — expanded from 3 to 7 tests: added missing-binding cases for all three endpoints + verified no internal paths leak in error messages
+- **Acceptance criteria met:**
+  - [x] Memanggil endpoint tanpa binding `CLASSMATE_KV` (disimulasikan di test) mengembalikan `{ error: { code, message } }` yang jelas, bukan stack trace mentah
+  - [x] Pesan error tidak membocorkan detail internal (nama file, path absolut)
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed
+- **Regression:** Phase 1 build OK + Passed 7
+- **Decisions made:**
+  - [CODE] Guard uses `!env.CLASSMATE_KV` truthiness check — Cloudflare Workers throws `TypeError` when a declared binding is absent; the guard catches this before the handler tries to use the binding
+  - [CODE] Guard placed before business logic in all three handlers (additive change, consistent placement) — in admin/ticker.ts the guard precedes the Access JWT check so a missing binding is detected even before auth
+  - [TEST] Expanded existing `health.test.ts` rather than creating separate test files — keeps all KV-binding-guard tests in one place, matches the existing convention of colocating endpoint tests with their handler
+  - [TEST] Used `undefined as unknown as KVNamespace` to simulate a missing binding — Vitest mocks can't easily express "property absent from object" when the handler destructures `env`; undefined is the closest simulation and the guard's `!env.CLASSMATE_KV` truthiness check catches it identically to a real missing binding
+- **Notes:** Pre-commit hook auto-fixed formatting via lint-staged before commit (CRLF→LF normalization on Windows). Remote branch delete reported "remote ref does not exist" — branch was never pushed to remote separately, only the merge commit landed on dev; this is expected and non-fatal.
+- **Knowledge drift:** none
 
 ---
 
-## [NEXT TASKS]
-
-### Phase 1 — Foundation
-
-#### Task #009 — Add Startup Env Var Validation
-- **Phase:** Phase 1 — Foundation
-- **Scope:** Setiap Pages Function yang butuh binding `CLASSMATE_KV` gagal cepat dengan error jelas (bukan exception generik) kalau binding tidak ada di environment — dicek di `ticker.ts`, `admin/ticker.ts`, `health.ts`.
-- **Files to create / modify:** `functions/api/ticker.ts`, `functions/api/admin/ticker.ts`, `functions/api/health.ts` (tambah guard clause di awal tiap handler)
-- **Acceptance criteria:**
-  - [ ] Memanggil endpoint tanpa binding `CLASSMATE_KV` (disimulasikan di test) mengembalikan `{ error: { code, message } }` yang jelas, bukan stack trace mentah
-  - [ ] Pesan error tidak membocorkan detail internal (nama file, path absolut)
-- **Dependencies:** Task #001
-- **Decisions made:** (fill after execution — never leave blank)
+## [IN PROGRESS]
 
 ### Phase 3 — Core Features
 
@@ -221,6 +241,14 @@ simple_mode: false
   - [ ] Test is isolated: sets up and tears down its own state (mock KV per test, tanpa state bocor antar test)
 - **Dependencies:** Task #004
 - **Decisions made:** (fill after execution — never leave blank)
+
+---
+
+## [NEXT TASKS]
+
+### Phase 1 — Foundation
+
+### Phase 3 — Core Features
 
 #### Task #011 — Unit Tests for Media Resolver Functions
 - **Phase:** Phase 3 — Core Features
