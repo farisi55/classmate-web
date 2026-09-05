@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
-knowledge_version: 1.0.1
-changelog_version: 1.0.6
+knowledge_version: 1.0.2
+changelog_version: 1.0.7
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -134,27 +134,53 @@ simple_mode: false
 - **Notes:** `format:check` sempat flag `vitest.config.ts` (file Task #004) — artifact CRLF lokal (blob LF, nol diff), di-write ulang ke LF, tidak ikut ter-commit
 - **Knowledge drift:** UPDATE REQUIRED: @knowledge §3 — top-level folder baru `e2e/` + root config `playwright.config.ts` ditambahkan ke folder structure (sekaligus `vitest.config.ts` yang terlewat #004) → knowledge v1.0.1
 
+### Task #006 — Set Up CI Pipeline ✅
+- **Completed:** 2026-09-05
+- **Phase:** Phase 1
+- **Status:** OK
+- **Branch:** feat/task-006-setup-ci-pipeline
+- **Files created / modified:**
+  - `.github/workflows/ci.yml` — new CI workflow: Prettier format check → ESLint → `astro check` → unit tests → build, on push/PR to main & dev, `npm ci` + Node 20 + npm cache, concurrency cancel-in-progress
+  - `changelog.md` — promote Task #007 to IN PROGRESS, bump v1.0.5 → v1.0.6
+- **Acceptance criteria met:**
+  - [x] Workflow gagal (exit non-zero) kalau lint, type-check, atau test gagal — tiap langkah step terpisah, kegagalan salah satu menggagalkan job
+  - [x] Workflow lulus hijau di kondisi kode saat ini setelah Task #002–#005 selesai — verified di commit task f95e37b
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed
+- **Regression:** Phase 1 build OK
+- **Decisions made:**
+  - [CONFIG] CI pakai `npm ci` (clean install dari lockfile), Node 20, cache npm; concurrency group per-ref dengan cancel-in-progress
+  - [INFRA] Workflow CI terpisah dari backup harian (Task #014) — dua workflow independen sesuai knowledge §8
+- **Notes:** ⚠️ Entri ini DIREKONSTRUKSI dari git history (commit f95e37b) saat Step 6 Task #007 — commit asli task #006 hanya mem-promote Task #007 dan bump versi tanpa menambahkan entri #006 ke [COMPLETED] (changelog structure violation, diperbaiki di sini). ⚠️ Post-merge manual commits `a91004b` ("add ignore") dan `d068269` ("igone .github") menambahkan `.github/` ke `.gitignore` dan menghapus `.github/workflows/ci.yml` dari tracking — file masih ada di disk tapi tidak ter-track di HEAD. Task #014 (backup workflow) wajib waspada: `.github/` sedang ter-ignore.
+- **Knowledge drift:** none dari task ini (rekonstruksi entri saja)
+
+### Task #007 — Pre-commit Hooks Blocking Secrets ✅
+- **Completed:** 2026-09-05
+- **Phase:** Phase 1
+- **Status:** OK
+- **Branch:** feat/task-007-pre-commit-hooks-blocking-secrets
+- **Files created / modified:**
+  - `.husky/pre-commit` — new pre-commit hook: menolak staging file secret (`.env`, `*.pem`, `*.key`, `*.p12`, `secrets/`) lalu menjalankan lint-staged
+  - `package.json` — added `husky` (^9.1.7) + `lint-staged` (^17.5.0) devDependencies, `prepare: husky` script, `lint-staged` config (eslint --fix + prettier --write untuk js/mjs/cjs/ts/tsx/astro; prettier --write untuk css)
+  - `package-lock.json` — updated lockfile
+- **Acceptance criteria met:**
+  - [x] Percobaan `git commit` dengan file `.env` staged ditolak oleh hook — verified: commit dengan `.env` staged exit 1 + pesan blokir ditampilkan
+  - [x] Percobaan commit dengan kode yang melanggar Prettier/ESLint diblokir atau auto-fix sebelum commit selesai — verified: pelanggaran Prettier auto-fix (commit sukses dengan file ter-reformat); pelanggaran ESLint `no-explicit-any` mem-block commit (exit 1)
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed
+- **Regression:** Passed — `npm run format:check` ✓ · `npm run lint` 0 errors ✓ · `npm run test` exit 0 ✓ · `npm run build` 15 pages ✓
+- **Decisions made:**
+  - [TOOLING] Husky v9 + lint-staged v17; logika hook di `.husky/pre-commit` (husky auto-generate shim di `.husky/_/` yang self-ignored)
+  - [SECURITY] Pola blokir secret sesuai `.gitignore` Task #001: `.env`/`.env.*`, `*.pem`/`*.key`/`*.p12`, path `secrets/`
+  - [CONFIG] lint-staged: `eslint --fix` lalu `prettier --write` untuk source; `.css` prettier-only; `prepare: husky` membuat hook auto-install di `npm install`/`npm ci`
+- **Notes:** npm audit melaporkan advisory pre-existing Astro 4.x (4 high, 2 moderate) — di luar scope Phase 1 (CVE scan item gate FULL, Phase 4+); husky/lint-staged tidak menambah advisory baru
+- **Knowledge drift:** UPDATE REQUIRED: @knowledge §3 — top-level folder baru `.husky/` ditambahkan ke folder structure → knowledge v1.0.2
+
 ---
 
 ## [IN PROGRESS]
 
-### Task #007 — Pre-commit Hooks Blocking Secrets
-- **Phase:** Phase 1 — Foundation
-- **Scope:** Pasang pre-commit hook (format + lint staged files, tolak commit yang menyertakan `.env`).
-- **Files to create / modify:** `package.json` (devDependency `husky` + `lint-staged`), `.husky/pre-commit` (baru)
-- **Acceptance criteria:**
-  - [ ] Percobaan `git commit` dengan file `.env` staged ditolak oleh hook
-  - [ ] Percobaan commit dengan kode yang melanggar Prettier/ESLint diblokir atau auto-fix sebelum commit selesai
-- **Dependencies:** Task #002, Task #003
-- **Decisions made:** (fill after execution — never leave blank)
-
----
-
-## [NEXT TASKS]
-
-### Phase 1 — Foundation
-
-#### Task #008 — Implement Health Check Endpoint
+### Task #008 — Implement Health Check Endpoint
 - **Phase:** Phase 1 — Foundation
 - **Scope:** `GET /api/health` publik, baca ringan dari KV, kembalikan `{ status, kv_reachable }` sesuai `knowledge.md` §5/§8 — tanpa expose detail internal.
 - **Files to create / modify:** `functions/api/health.ts` (baru)
@@ -165,6 +191,12 @@ simple_mode: false
   - [ ] Test is isolated: sets up and tears down its own state
 - **Dependencies:** Task #001
 - **Decisions made:** (fill after execution — never leave blank)
+
+---
+
+## [NEXT TASKS]
+
+### Phase 1 — Foundation
 
 #### Task #009 — Add Startup Env Var Validation
 - **Phase:** Phase 1 — Foundation
