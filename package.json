@@ -15,7 +15,8 @@
     "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "prepare": "husky"
   },
   "dependencies": {
     "@astrojs/react": "^3.6.0",
@@ -36,9 +37,18 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^10.9.1",
     "eslint-plugin-astro": "^3.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.0",
     "prettier": "^3.9.6",
     "tailwindcss": "^3.4.10",
     "typescript": "^5.9.3",
     "vitest": "^5.0.0"
+  },
+  "lint-staged": {
+    "*.{js,mjs,cjs,ts,tsx,astro}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.css": "prettier --write"
   }
 }
