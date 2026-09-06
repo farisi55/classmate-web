@@ -27,7 +27,7 @@ export interface OptimizedImage {
 
 const activityImageModules = import.meta.glob<{ default: ImageMetadata }>(
   '/src/assets/activities/*.{jpg,jpeg,png,webp}',
-  { eager: true }
+  { eager: true },
 );
 
 // PNG/JPG/WebP only — Astro's built-in image service (Sharp) doesn't
@@ -37,17 +37,17 @@ const activityImageModules = import.meta.glob<{ default: ImageMetadata }>(
 // ASSET_MANIFEST.md).
 const clientLogoModules = import.meta.glob<{ default: ImageMetadata }>(
   '/src/assets/logos/clients/*.{jpg,jpeg,png,webp}',
-  { eager: true }
+  { eager: true },
 );
 
 const venueLogoModules = import.meta.glob<{ default: ImageMetadata }>(
   '/src/assets/logos/venues/*.{jpg,jpeg,png,webp}',
-  { eager: true }
+  { eager: true },
 );
 
 const heroImageModules = import.meta.glob<{ default: ImageMetadata }>(
   '/src/assets/hero/*.{jpg,jpeg,png,webp}',
-  { eager: true }
+  { eager: true },
 );
 
 function slugify(name: string): string {
@@ -76,7 +76,7 @@ export async function activityImages(slug: string): Promise<OptimizedImage[]> {
     .map(([, mod]) => mod.default);
 
   const optimized = await Promise.all(
-    matches.map((img) => getImage({ src: img, format: 'webp', width: 1600 }))
+    matches.map((img) => getImage({ src: img, format: 'webp', width: 1600 })),
   );
   return optimized.map((o) => ({
     src: o.src,
@@ -92,7 +92,7 @@ export async function activityImages(slug: string): Promise<OptimizedImage[]> {
  */
 export function clientLogo(name: string): ImageMetadata | null {
   const match = Object.entries(clientLogoModules).find(([path]) =>
-    path.includes(`/client-${slugify(name)}.`)
+    path.includes(`/client-${slugify(name)}.`),
   );
   return match?.[1].default ?? null;
 }
@@ -100,7 +100,7 @@ export function clientLogo(name: string): ImageMetadata | null {
 /** Logo for one venue, matched by `venue-{slugified-name}.{ext}`. */
 export function venueLogo(name: string): ImageMetadata | null {
   const match = Object.entries(venueLogoModules).find(([path]) =>
-    path.includes(`/venue-${slugify(name)}.`)
+    path.includes(`/venue-${slugify(name)}.`),
   );
   return match?.[1].default ?? null;
 }

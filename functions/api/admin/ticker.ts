@@ -41,6 +41,11 @@ function isValidMessage(m: unknown): m is TickerMessage {
 }
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+  // Fail fast if the KV binding is missing from the environment.
+  if (!env.CLASSMATE_KV) {
+    return jsonError('kv_binding_missing', 'KV binding CLASSMATE_KV is not configured.', 500);
+  }
+
   // Fail closed if Cloudflare Access hasn't been put in front of this route.
   if (!request.headers.get('Cf-Access-Jwt-Assertion')) {
     return jsonError('unauthorized', 'This endpoint must be placed behind Cloudflare Access.', 401);
@@ -54,11 +59,23 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
 
   const data = (body as { data?: unknown[] })?.data;
-  if (!Array.isArray(data) || data.length === 0 || data.length > 10 || !data.every(isValidMessage)) {
-    return jsonError('invalid_payload', 'Expected { data: TickerMessage[] } with 1-10 valid entries.', 400);
+  if (
+    !Array.isArray(data) ||
+    data.length === 0 ||
+    data.length > 10 ||
+    !data.every(isValidMessage)
+  ) {
+    return jsonError(
+      'invalid_payload',
+      'Expected { data: TickerMessage[] } with 1-10 valid entries.',
+      400,
+    );
   }
 
-  const withTimestamp: TickerMessage[] = data.map((m) => ({ ...m, updated_at: new Date().toISOString() }));
+  const withTimestamp: TickerMessage[] = data.map((m) => ({
+    ...m,
+    updated_at: new Date().toISOString(),
+  }));
 
   try {
     // Idempotent full overwrite (knowledge.md §7 domain rule) — safe to retry.

@@ -1,0 +1,8 @@
+dist/
+src/assets/
+public/
+node_modules/
+*.md
+*.json
+*.yml
+*.yaml

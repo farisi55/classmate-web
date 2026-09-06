@@ -21,7 +21,11 @@ export default function AdminTickerForm() {
       .catch(() => setState('error'));
   }, []);
 
-  function updateField(index: number, field: keyof TickerMessage, value: string | boolean | number) {
+  function updateField(
+    index: number,
+    field: keyof TickerMessage,
+    value: string | boolean | number,
+  ) {
     setMessages((prev) => prev.map((m, i) => (i === index ? { ...m, [field]: value } : m)));
   }
 
@@ -48,8 +52,8 @@ export default function AdminTickerForm() {
   return (
     <div className="max-w-2xl">
       <p className="text-sm text-ink-soft mb-6">
-        Maksimum 3 pesan aktif tampil bergantian di bar atas situs. Isi versi Indonesia
-        dan Inggris untuk masing-masing.
+        Maksimum 3 pesan aktif tampil bergantian di bar atas situs. Isi versi Indonesia dan Inggris
+        untuk masing-masing.
       </p>
 
       <div className="space-y-6">
@@ -87,18 +91,19 @@ export default function AdminTickerForm() {
         ))}
       </div>
 
-      <button
-        onClick={handleSave}
-        disabled={state === 'saving'}
-        className="btn-primary mt-6"
-      >
+      <button onClick={handleSave} disabled={state === 'saving'} className="btn-primary mt-6">
         {state === 'saving' ? 'Menyimpan...' : 'Simpan Perubahan'}
       </button>
 
-      {state === 'saved' && <p className="text-sm text-kiwi font-semibold mt-3">Tersimpan — perubahan langsung tayang.</p>}
+      {state === 'saved' && (
+        <p className="text-sm text-kiwi font-semibold mt-3">
+          Tersimpan — perubahan langsung tayang.
+        </p>
+      )}
       {state === 'error' && (
         <p className="text-sm text-folly font-semibold mt-3">
-          Gagal memuat/menyimpan. Pastikan kamu sudah login lewat Cloudflare Access dan KV namespace sudah terhubung.
+          Gagal memuat/menyimpan. Pastikan kamu sudah login lewat Cloudflare Access dan KV namespace
+          sudah terhubung.
         </p>
       )}
     </div>

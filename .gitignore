@@ -1,6 +1,8 @@
 # build output
 dist/
 .astro/
+coverage/
+test-results/
 .claude/
 
 # dependencies
@@ -10,6 +12,10 @@ node_modules/
 .env
 .env.production
 .dev.vars
+*.pem
+*.key
+*.p12
+secrets/
 
 # editor / OS
 .DS_Store
@@ -18,3 +24,5 @@ node_modules/
 
 # wrangler
 .wrangler/
+.github/
+.husky/
