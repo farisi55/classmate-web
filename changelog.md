@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
 knowledge_version: 1.0.2
-changelog_version: 1.0.11
+changelog_version: 1.0.12
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -278,20 +278,44 @@ simple_mode: false
 
 ---
 
+### Task #012 — Implement Ticker Export Endpoint ✅
+- **Completed:** 2026-09-06
+- **Phase:** Phase 3
+- **Status:** OK
+- **Branch:** feat/task-012-implement-ticker-export-endpoint
+- **Files created / modified:**
+  - `functions/api/admin/ticker-export.ts` — new GET endpoint returning raw KV `ticker:messages` value as-is
+  - `functions/api/admin/ticker-export.test.ts` — 9 isolated unit tests covering success, auth failure, missing binding, and error cases
+- **Acceptance criteria met:**
+  - [x] `GET /api/admin/ticker-export` mengembalikan isi KV `ticker:messages` sebagai JSON tanpa transformasi — verified by unit tests
+  - [x] KV key belum pernah ditulis → mengembalikan array kosong `[]`, bukan error — verified by unit test returning empty array
+  - [x] Unit test written and passing for new logic — 9 tests passing
+  - [x] Test is isolated: sets up and tears down its own state — each test creates fresh mocks, no shared state
+- **Security gate:** STANDARD — all checks passed
+- **Scalability gate:** STANDARD — all checks passed
+- **Regression:** Passed 55 (all existing tests continue to pass)
+- **Decisions made:**
+  - [CODE] Auth check precedes KV binding check (defense in depth) — unauthorized requests rejected with 401 before checking for missing KV binding
+  - [CODE] Uses same error response pattern as existing endpoints (`{ data, error }` envelope with `{ code, message }` error objects)
+  - [TEST] Mocked KV namespace with `get()` method to test both success and failure paths without real KV
+  - [TEST] Auth header check verifies both `CF-Access-Client-Id` and `CF-Access-Client-Secret` are required (Service Token auth)
+- **Notes:** no deviations — clean implementation following existing patterns
+- **Knowledge drift:** none
+
+---
+
 ## [IN PROGRESS]
 
-### Phase 3 — Core Features
+### Phase 4 — Integration
 
-#### Task #012 — Implement Ticker Export Endpoint
-- **Phase:** Phase 3 — Core Features
-- **Scope:** `GET /api/admin/ticker-export` — baca raw value KV `ticker:messages` apa adanya, untuk dikonsumsi workflow backup (Task #014). Endpoint ini sendiri tidak butuh tahu soal GitHub Actions — hanya perlu diproteksi Access (setup Access-nya di Task #013).
-- **Files to create / modify:** `functions/api/admin/ticker-export.ts` (baru)
+#### Task #013 — Create Dedicated Access Application for Export Endpoint
+- **Phase:** Phase 4 — Integration
+- **Scope:** Buat Access Application baru di Cloudflare Zero Trust, path match `/api/admin/ticker-export`, policy **Service Auth saja** (tanpa login email/Google) — terpisah dari Access Application `/admin` yang sudah ada, sesuai keputusan least-privilege di `knowledge.md` §3/§9.
+- **Files to create / modify:** Tidak ada kode — konfigurasi dashboard Cloudflare Zero Trust. `docs/access-setup.md` (baru — catat Application ID & ringkasan policy untuk referensi tim, bukan credential-nya)
 - **Acceptance criteria:**
-  - [ ] `GET /api/admin/ticker-export` mengembalikan isi KV `ticker:messages` sebagai JSON tanpa transformasi
-  - [ ] KV key belum pernah ditulis → mengembalikan array kosong `[]`, bukan error
-  - [ ] Unit test written and passing for new logic
-  - [ ] Test is isolated: sets up and tears down its own state
-- **Dependencies:** Task #001
+  - [ ] Request ke `/api/admin/ticker-export` tanpa header `CF-Access-Client-Id`/`CF-Access-Client-Secret` ditolak (401/403) oleh Access, tidak sampai ke kode aplikasi
+  - [ ] Request dengan Service Token yang valid untuk Application ini berhasil (200); Service Token dari Application `/admin` yang lama (kalau beda) tidak otomatis punya akses ke path ini
+- **Dependencies:** Task #012
 - **Decisions made:** (fill after execution — never leave blank)
 
 ---
@@ -305,16 +329,6 @@ simple_mode: false
 ### Phase 4 — Integration
 
 > **Catatan circuit breaker:** aplikasi ini tidak melakukan outbound call ke API pihak ketiga dari kode runtime-nya sendiri (KV read/write saja; verifikasi Access terjadi di edge Cloudflare, bukan panggilan aplikasi). Karena itu, walau `simple_mode: false`, **tidak ada task circuit breaker** di bawah — kriteria itu genuinely tidak berlaku untuk shape integrasi proyek ini (integrasi berjalan sebagai *scheduled-pull* dari luar, bukan *outbound push* dari aplikasi).
-
-#### Task #013 — Create Dedicated Access Application for Export Endpoint
-- **Phase:** Phase 4 — Integration
-- **Scope:** Buat Access Application baru di Cloudflare Zero Trust, path match `/api/admin/ticker-export`, policy **Service Auth saja** (tanpa login email/Google) — terpisah dari Access Application `/admin` yang sudah ada, sesuai keputusan least-privilege di `knowledge.md` §3/§9.
-- **Files to create / modify:** Tidak ada kode — konfigurasi dashboard Cloudflare Zero Trust. `docs/access-setup.md` (baru — catat Application ID & ringkasan policy untuk referensi tim, bukan credential-nya)
-- **Acceptance criteria:**
-  - [ ] Request ke `/api/admin/ticker-export` tanpa header `CF-Access-Client-Id`/`CF-Access-Client-Secret` ditolak (401/403) oleh Access, tidak sampai ke kode aplikasi
-  - [ ] Request dengan Service Token yang valid untuk Application ini berhasil (200); Service Token dari Application `/admin` yang lama (kalau beda) tidak otomatis punya akses ke path ini
-- **Dependencies:** Task #012
-- **Decisions made:** (fill after execution — never leave blank)
 
 #### Task #014 — Build GitHub Actions Backup Workflow
 - **Phase:** Phase 4 — Integration
