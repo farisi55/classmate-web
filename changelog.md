@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
 knowledge_version: 1.0.3
-changelog_version: 1.0.13
+changelog_version: 1.0.14
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -326,18 +326,40 @@ simple_mode: false
 
 ---
 
+### Task #014 — Build GitHub Actions Backup Workflow ✅
+- **Completed:** 2026-09-07
+- **Phase:** Phase 4
+- **Status:** OK
+- **Branch:** feat/task-014-backup-workflow
+- **Files created / modified:**
+  - `.github/workflows/backup-ticker.yml` — new GitHub Actions workflow: daily scheduled backup of ticker messages via export endpoint, with manual trigger support and idempotent commit logic
+- **Acceptance criteria met:**
+  - [x] Trigger manual (`workflow_dispatch`) berhasil: memanggil endpoint, commit file kalau ada perubahan, permission `contents: write` aktif eksplisit di workflow
+  - [x] Menjalankan workflow dua kali berturut-turut tanpa perubahan data ticker menghasilkan **nol commit baru** di run kedua (idempotent, bukan commit kosong)
+- **Security gate:** FULL — all checks passed
+- **Scalability gate:** FULL — all checks passed
+- **Regression:** Phase 1 build OK (15 pages), lint 0 errors, format:check passes, 55 tests pass
+- **Decisions made:**
+  - [INFRA] Workflow uses `curl` with Service Token headers to fetch from production endpoint, extracts `data` field from response envelope using `jq`, commits only if file changed
+  - [SECURITY] Workflow uses GitHub Actions secrets (`CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET`) which are automatically masked in logs; no secrets in workflow file
+  - [CONFIG] Schedule: `0 19 * * *` UTC (02:00 WIB daily); manual trigger via `workflow_dispatch`
+- **Notes:** Workflow validates HTTP response code before processing; uses `git diff --cached --quiet` to avoid empty commits; git config uses `github-actions[bot]` for commit attribution
+- **Knowledge drift:** none
+
+---
+
 ## [IN PROGRESS]
 
 ### Phase 4 — Integration
 
-#### Task #014 — Build GitHub Actions Backup Workflow
+#### Task #015 — Verify WhatsApp Click Analytics Event Tracking
 - **Phase:** Phase 4 — Integration
-- **Scope:** Workflow terjadwal harian (`0 19 * * *` UTC = 02:00 WIB) — panggil `/api/admin/ticker-export` pakai Service Token, commit `backups/ticker-messages.json` (overwrite, no-op kalau tidak berubah).
-- **Files to create / modify:** `.github/workflows/backup-ticker.yml` (baru)
+- **Scope:** Pastikan tiap tombol WA di kartu paket mengirim custom event ke Cloudflare Web Analytics (success metric closed decision, `knowledge.md` §1/§8) — audit apakah sudah terpasang di kode existing, implementasikan kalau belum.
+- **Files to create / modify:** komponen kartu paket terkait (`src/components/PackageCard.astro` atau setara — dikonfirmasi saat audit) — TBD tepatnya sampai audit awal task ini menemukan file mana yang menangani klik WA saat ini
 - **Acceptance criteria:**
-  - [ ] Trigger manual (`workflow_dispatch`) berhasil: memanggil endpoint, commit file kalau ada perubahan, permission `contents: write` aktif eksplisit di workflow
-  - [ ] Menjalankan workflow dua kali berturut-turut tanpa perubahan data ticker menghasilkan **nol commit baru** di run kedua (idempotent, bukan commit kosong)
-- **Dependencies:** Task #012, Task #013
+  - [ ] Klik tombol WA di kartu paket manapun memicu custom event Cloudflare Web Analytics yang terverifikasi (via dashboard/test event), bukan cuma navigasi ke `wa.me`
+  - [ ] Event membawa identitas paket (nama tier) supaya klik per-paket bisa dibedakan, bukan satu event generik untuk semua tombol
+- **Dependencies:** Task #001
 - **Decisions made:** (fill after execution — never leave blank)
 
 ---
@@ -351,16 +373,6 @@ simple_mode: false
 ### Phase 4 — Integration
 
 > **Catatan circuit breaker:** aplikasi ini tidak melakukan outbound call ke API pihak ketiga dari kode runtime-nya sendiri (KV read/write saja; verifikasi Access terjadi di edge Cloudflare, bukan panggilan aplikasi). Karena itu, walau `simple_mode: false`, **tidak ada task circuit breaker** di bawah — kriteria itu genuinely tidak berlaku untuk shape integrasi proyek ini (integrasi berjalan sebagai *scheduled-pull* dari luar, bukan *outbound push* dari aplikasi).
-
-#### Task #014 — Build GitHub Actions Backup Workflow
-- **Phase:** Phase 4 — Integration
-- **Scope:** Workflow terjadwal harian (`0 19 * * *` UTC = 02:00 WIB) — panggil `/api/admin/ticker-export` pakai Service Token, commit `backups/ticker-messages.json` (overwrite, no-op kalau tidak berubah).
-- **Files to create / modify:** `.github/workflows/backup-ticker.yml` (baru)
-- **Acceptance criteria:**
-  - [ ] Trigger manual (`workflow_dispatch`) berhasil: memanggil endpoint, commit file kalau ada perubahan, permission `contents: write` aktif eksplisit di workflow
-  - [ ] Menjalankan workflow dua kali berturut-turut tanpa perubahan data ticker menghasilkan **nol commit baru** di run kedua (idempotent, bukan commit kosong)
-- **Dependencies:** Task #012, Task #013
-- **Decisions made:** (fill after execution — never leave blank)
 
 #### Task #015 — Verify WhatsApp Click Analytics Event Tracking
 - **Phase:** Phase 4 — Integration
