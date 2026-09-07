@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
 knowledge_version: 1.0.3
-changelog_version: 1.0.14
+changelog_version: 1.0.15
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -348,17 +348,40 @@ simple_mode: false
 
 ---
 
+### Task #015 — Verify WhatsApp Click Analytics Event Tracking ✅
+- **Completed:** 2026-09-07
+- **Phase:** Phase 4
+- **Status:** OK — **re-scoped during execution** (original AC unsatisfiable; developer-approved via explicit decision "Beacon best-effort only")
+- **Branch:** feat/task-015-whatsapp-click-analytics
+- **Files created / modified:**
+  - `src/layouts/BaseLayout.astro` — conditional Cloudflare Web Analytics beacon in `<head>` (`is:inline`, `type="module"`, gated by build-time env `PUBLIC_CF_BEACON_TOKEN`; token absent → no beacon rendered at all)
+  - `docs/web-analytics.md` — new doc: audit result (9 penempatan CTA WA teridentifikasi, nol instrumentasi existing), pembatasan custom events dengan kutipan sumber resmi, langkah setup dashboard + env var, log verifikasi, follow-up
+  - `knowledge.md` — §8 env var + koreksi metrics + version bump (lihat Knowledge drift)
+- **Acceptance criteria met:**
+  - [x] (re-scoped) ~~Klik tombol WA memicu custom event CF Web Analytics terverifikasi via dashboard~~ — **tidak terpenuhi dan tidak mungkin**: Web Analytics resmi TIDAK mendukung custom events ("Not yet" — FAQ resmi developers.cloudflare.com, diverifikasi 2026-09-07); plumbing event palsu sengaja tidak dibuat karena tidak bisa diverifikasi di dashboard (akan memfabrikasi AC); beacon pageview+performance terpasang di 15 halaman sebagai pengganti best-effort; tracking klik per-paket ditunda ke task pengganti (kandidat: KV counter / Analytics Engine)
+  - [x] (re-scoped) ~~Event membawa identitas paket~~ — N/A dengan alasan yang sama (docs/web-analytics.md §Hard Limitation); konvensi instrumentasi masa depan (pkg.slug per kartu, label generik untuk penempatan lain) sudah didokumentasikan
+  - [x] Audit awal task dilakukan sesuai scope: seluruh penempatan tombol WA diaudit (`PackageCard`, `WhatsAppButton`, `Header` ×2, `HomeContent` ×2, `KlienVenueContent`, `KontakContent`, `SyaratKetentuanContent`) dan dikonfirmasi belum ada analytics apapun
+- **Security gate:** FULL — all checks passed [deviation tercatat: item CVE scan "zero high/critical" TIDAK terpenuhi — 6 advisory pre-existing tree Astro 4.x (4 high, 2 moderate), terdokumentasi sejak Task #007, NOL advisory baru dari task ini (tanpa perubahan dependency sama sekali); token beacon publik by design bukan secret; tidak ada input eksternal baru, tidak ada endpoint baru, tidak ada eval/HTML injection]
+- **Scalability gate:** FULL — all checks passed [item FULL infra runtime (rate limit, circuit breaker, load baseline, queue) n.a. dengan alasan eksplisit: perubahan murni client-side tag di build time — tidak ada jalur kode runtime/endpoint yang tersentuh; beacon dilayani edge Cloudflare]
+- **Regression:** Passed 55, 0 failed (398ms) · lint 0 errors · format:check pass · build 15 pages OK (diverifikasi dengan & tanpa token)
+- **Decisions made:**
+  - [ARCH] Re-scope atas keputusan developer: TIDAK mengimplementasikan plumbing event yang tidak bisa diverifikasi — memilih dokumentasi jujur atas pembatasan + beacon nyata; opsi pengganti (KV counter / Analytics Engine) dicatat sebagai kandidat task baru
+  - [CONFIG] Beacon di-render kondisional via `import.meta.env.PUBLIC_CF_BEACON_TOKEN` — tanpa token, build/test/preview tetap hijau dan nol request ke cloudflareinsights.com
+  - [SECURITY] Token beacon diperlakukan publik by design (ikut ter-ship di HTML tiap halaman, setara measurement ID GA) — disimpan sebagai env var Pages, bukan secret; satu snippet per halaman dari layout bersama
+- **Notes:** Keputusan pengguna via ask_user: "Beacon best-effort only" dari 4 opsi (re-scope KV counter / re-scope Analytics Engine / FAIL task / beacon best-effort). Konteks gate-tier: tabel fase menetapkan FULL untuk Phase 4, namun sebagian besar item FULL tidak applicable pada perubahan ini — semua item tetap dievaluasi eksplisit; yang n.a. diberi alasan, bukan dilewati diam-diam. Forward impact: `e2e/wa-click.spec.ts` (Task #019) tetap menguji href `wa.me` per paket — tidak terpengaruh oleh re-scope ini.
+- **Knowledge drift:** UPDATE REQUIRED: @knowledge §8 — (1) env var opsional `PUBLIC_CF_BEACON_TOKEN` ditambahkan; (2) baris Observability—metrics dikoreksi: Web Analytics TIDAK mendukung custom events (terverifikasi FAQ resmi 2026-09-07), pendekatan pengganti menunggu derivasi task → knowledge v1.0.4 (edit sudah dibuat task ini)
+
 ## [IN PROGRESS]
 
-### Phase 4 — Integration
+### Phase 5 — UI/UX
 
-#### Task #015 — Verify WhatsApp Click Analytics Event Tracking
-- **Phase:** Phase 4 — Integration
-- **Scope:** Pastikan tiap tombol WA di kartu paket mengirim custom event ke Cloudflare Web Analytics (success metric closed decision, `knowledge.md` §1/§8) — audit apakah sudah terpasang di kode existing, implementasikan kalau belum.
-- **Files to create / modify:** komponen kartu paket terkait (`src/components/PackageCard.astro` atau setara — dikonfirmasi saat audit) — TBD tepatnya sampai audit awal task ini menemukan file mana yang menangani klik WA saat ini
+#### Task #016 — WCAG 2.1 AA Accessibility Audit
+- **Phase:** Phase 5 — UI/UX
+- **Scope:** Audit ketujuh halaman × 2 bahasa terhadap WCAG 2.1 AA (kontras warna terhadap palet `knowledge.md` §6, label form, alt text, navigasi keyboard) — perbaiki temuan yang gagal.
+- **Files to create / modify:** `docs/a11y-audit.md` (baru — catat temuan) + file komponen yang diperbaiki (TBD sampai audit menemukan pelanggaran spesifik)
 - **Acceptance criteria:**
-  - [ ] Klik tombol WA di kartu paket manapun memicu custom event Cloudflare Web Analytics yang terverifikasi (via dashboard/test event), bukan cuma navigasi ke `wa.me`
-  - [ ] Event membawa identitas paket (nama tier) supaya klik per-paket bisa dibedakan, bukan satu event generik untuk semua tombol
+  - [ ] Audit otomatis (axe-core/Lighthouse a11y) terhadap 14 rute (7 halaman × ID/EN) menghasilkan nol pelanggaran level AA yang serius/kritis
+  - [ ] Navigasi penuh-keyboard (tanpa mouse) memungkinkan mengakses seluruh interaksi utama (filter aktivitas, modal galeri, tombol WA)
 - **Dependencies:** Task #001
 - **Decisions made:** (fill after execution — never leave blank)
 
@@ -374,27 +397,9 @@ simple_mode: false
 
 > **Catatan circuit breaker:** aplikasi ini tidak melakukan outbound call ke API pihak ketiga dari kode runtime-nya sendiri (KV read/write saja; verifikasi Access terjadi di edge Cloudflare, bukan panggilan aplikasi). Karena itu, walau `simple_mode: false`, **tidak ada task circuit breaker** di bawah — kriteria itu genuinely tidak berlaku untuk shape integrasi proyek ini (integrasi berjalan sebagai *scheduled-pull* dari luar, bukan *outbound push* dari aplikasi).
 
-#### Task #015 — Verify WhatsApp Click Analytics Event Tracking
-- **Phase:** Phase 4 — Integration
-- **Scope:** Pastikan tiap tombol WA di kartu paket mengirim custom event ke Cloudflare Web Analytics (success metric closed decision, `knowledge.md` §1/§8) — audit apakah sudah terpasang di kode existing, implementasikan kalau belum.
-- **Files to create / modify:** komponen kartu paket terkait (`src/components/PackageCard.astro` atau setara — dikonfirmasi saat audit) — TBD tepatnya sampai audit awal task ini menemukan file mana yang menangani klik WA saat ini
-- **Acceptance criteria:**
-  - [ ] Klik tombol WA di kartu paket manapun memicu custom event Cloudflare Web Analytics yang terverifikasi (via dashboard/test event), bukan cuma navigasi ke `wa.me`
-  - [ ] Event membawa identitas paket (nama tier) supaya klik per-paket bisa dibedakan, bukan satu event generik untuk semua tombol
-- **Dependencies:** Task #001
-- **Decisions made:** (fill after execution — never leave blank)
-
 ### Phase 5 — UI/UX
 
-#### Task #016 — WCAG 2.1 AA Accessibility Audit
-- **Phase:** Phase 5 — UI/UX
-- **Scope:** Audit ketujuh halaman × 2 bahasa terhadap WCAG 2.1 AA (kontras warna terhadap palet `knowledge.md` §6, label form, alt text, navigasi keyboard) — perbaiki temuan yang gagal.
-- **Files to create / modify:** `docs/a11y-audit.md` (baru — catat temuan) + file komponen yang diperbaiki (TBD sampai audit menemukan pelanggaran spesifik)
-- **Acceptance criteria:**
-  - [ ] Audit otomatis (axe-core/Lighthouse a11y) terhadap 14 rute (7 halaman × ID/EN) menghasilkan nol pelanggaran level AA yang serius/kritis
-  - [ ] Navigasi penuh-keyboard (tanpa mouse) memungkinkan mengakses seluruh interaksi utama (filter aktivitas, modal galeri, tombol WA)
-- **Dependencies:** Task #001
-- **Decisions made:** (fill after execution — never leave blank)
+(none — Task #016 promoted to [IN PROGRESS])
 
 #### Task #017 — XSS / Output Encoding Review
 - **Phase:** Phase 5 — UI/UX

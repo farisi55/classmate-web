@@ -14,6 +14,12 @@ interface Props {
 
 const { lang, title, description } = Astro.props;
 const canonicalPath = lang === 'id' ? Astro.url.pathname.replace(/^\/en/, '') : Astro.url.pathname;
+
+/** Cloudflare Web Analytics beacon token — public by design (ships in every
+ * page's HTML source, like a GA measurement ID; never a secret). Set as a
+ * build-time env var on Cloudflare Pages; when absent no beacon is rendered
+ * and the site works unchanged. See docs/web-analytics.md. */
+const cfBeaconToken: string | undefined = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
 ---
 
 <!doctype html>
@@ -45,6 +51,15 @@ const canonicalPath = lang === 'id' ? Astro.url.pathname.replace(/^\/en/, '') : 
       areaServed: 'Jabodetabek',
       telephone: '+62899-240-0880',
     })} />
+
+    {cfBeaconToken ? (
+      <script
+        is:inline
+        type="module"
+        src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon={JSON.stringify({ token: cfBeaconToken })}
+      />
+    ) : null}
   </head>
   <body>
     <RunningTicker lang={lang} />
