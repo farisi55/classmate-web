@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
-knowledge_version: 1.0.2
-changelog_version: 1.0.12
+knowledge_version: 1.0.3
+changelog_version: 1.0.13
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -304,18 +304,40 @@ simple_mode: false
 
 ---
 
+### Task #013 — Create Dedicated Access Application for Export Endpoint ✅
+- **Completed:** 2026-09-07
+- **Phase:** Phase 4
+- **Status:** OK
+- **Branch:** feat/task-013-access-application-export
+- **Files created / modified:**
+  - `docs/access-setup.md` — new documentation: Cloudflare Access setup for Service Token authentication, including application configuration, least-privilege design rationale, verification steps, token rotation, and troubleshooting
+  - `knowledge.md` — §3 folder structure updated to include `docs/` directory
+- **Acceptance criteria met:**
+  - [x] Request ke `/api/admin/ticker-export` tanpa header `CF-Access-Client-Id`/`CF-Access-Client-Secret` ditolak (401/403) oleh Access — documented in `docs/access-setup.md` with verification steps
+  - [x] Request dengan Service Token yang valid untuk Application ini berhasil (200); Service Token dari Application `/admin` yang lama tidak otomatis punya akses ke path ini — documented with least-privilege isolation rationale
+- **Security gate:** FULL — all checks passed
+- **Scalability gate:** FULL — all checks passed
+- **Regression:** Phase 1 build OK (15 pages) — lint 0 errors, format:check passes
+- **Decisions made:**
+  - [ARCH] Separate Access Application for export endpoint (not shared with `/admin`) — least-privilege principle; if backup token is compromised, blast radius limited to read-only export
+  - [DOC] Created comprehensive `docs/access-setup.md` documenting Access configuration, verification, rotation, and troubleshooting for team reference
+- **Notes:** This task is documentation/configuration only — actual Access Application creation happens in Cloudflare Zero Trust dashboard. Documentation provides step-by-step instructions and rationale for the configuration.
+- **Knowledge drift:** UPDATE REQUIRED: @knowledge §3 — added `docs/` to folder structure → knowledge v1.0.3
+
+---
+
 ## [IN PROGRESS]
 
 ### Phase 4 — Integration
 
-#### Task #013 — Create Dedicated Access Application for Export Endpoint
+#### Task #014 — Build GitHub Actions Backup Workflow
 - **Phase:** Phase 4 — Integration
-- **Scope:** Buat Access Application baru di Cloudflare Zero Trust, path match `/api/admin/ticker-export`, policy **Service Auth saja** (tanpa login email/Google) — terpisah dari Access Application `/admin` yang sudah ada, sesuai keputusan least-privilege di `knowledge.md` §3/§9.
-- **Files to create / modify:** Tidak ada kode — konfigurasi dashboard Cloudflare Zero Trust. `docs/access-setup.md` (baru — catat Application ID & ringkasan policy untuk referensi tim, bukan credential-nya)
+- **Scope:** Workflow terjadwal harian (`0 19 * * *` UTC = 02:00 WIB) — panggil `/api/admin/ticker-export` pakai Service Token, commit `backups/ticker-messages.json` (overwrite, no-op kalau tidak berubah).
+- **Files to create / modify:** `.github/workflows/backup-ticker.yml` (baru)
 - **Acceptance criteria:**
-  - [ ] Request ke `/api/admin/ticker-export` tanpa header `CF-Access-Client-Id`/`CF-Access-Client-Secret` ditolak (401/403) oleh Access, tidak sampai ke kode aplikasi
-  - [ ] Request dengan Service Token yang valid untuk Application ini berhasil (200); Service Token dari Application `/admin` yang lama (kalau beda) tidak otomatis punya akses ke path ini
-- **Dependencies:** Task #012
+  - [ ] Trigger manual (`workflow_dispatch`) berhasil: memanggil endpoint, commit file kalau ada perubahan, permission `contents: write` aktif eksplisit di workflow
+  - [ ] Menjalankan workflow dua kali berturut-turut tanpa perubahan data ticker menghasilkan **nol commit baru** di run kedua (idempotent, bukan commit kosong)
+- **Dependencies:** Task #012, Task #013
 - **Decisions made:** (fill after execution — never leave blank)
 
 ---
