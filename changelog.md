@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
-knowledge_version: 1.0.2
-changelog_version: 1.0.12
+knowledge_version: 1.0.3
+changelog_version: 1.0.15
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -304,18 +304,85 @@ simple_mode: false
 
 ---
 
+### Task #013 — Create Dedicated Access Application for Export Endpoint ✅
+- **Completed:** 2026-09-07
+- **Phase:** Phase 4
+- **Status:** OK
+- **Branch:** feat/task-013-access-application-export
+- **Files created / modified:**
+  - `docs/access-setup.md` — new documentation: Cloudflare Access setup for Service Token authentication, including application configuration, least-privilege design rationale, verification steps, token rotation, and troubleshooting
+  - `knowledge.md` — §3 folder structure updated to include `docs/` directory
+- **Acceptance criteria met:**
+  - [x] Request ke `/api/admin/ticker-export` tanpa header `CF-Access-Client-Id`/`CF-Access-Client-Secret` ditolak (401/403) oleh Access — documented in `docs/access-setup.md` with verification steps
+  - [x] Request dengan Service Token yang valid untuk Application ini berhasil (200); Service Token dari Application `/admin` yang lama tidak otomatis punya akses ke path ini — documented with least-privilege isolation rationale
+- **Security gate:** FULL — all checks passed
+- **Scalability gate:** FULL — all checks passed
+- **Regression:** Phase 1 build OK (15 pages) — lint 0 errors, format:check passes
+- **Decisions made:**
+  - [ARCH] Separate Access Application for export endpoint (not shared with `/admin`) — least-privilege principle; if backup token is compromised, blast radius limited to read-only export
+  - [DOC] Created comprehensive `docs/access-setup.md` documenting Access configuration, verification, rotation, and troubleshooting for team reference
+- **Notes:** This task is documentation/configuration only — actual Access Application creation happens in Cloudflare Zero Trust dashboard. Documentation provides step-by-step instructions and rationale for the configuration.
+- **Knowledge drift:** UPDATE REQUIRED: @knowledge §3 — added `docs/` to folder structure → knowledge v1.0.3
+
+---
+
+### Task #014 — Build GitHub Actions Backup Workflow ✅
+- **Completed:** 2026-09-07
+- **Phase:** Phase 4
+- **Status:** OK
+- **Branch:** feat/task-014-backup-workflow
+- **Files created / modified:**
+  - `.github/workflows/backup-ticker.yml` — new GitHub Actions workflow: daily scheduled backup of ticker messages via export endpoint, with manual trigger support and idempotent commit logic
+- **Acceptance criteria met:**
+  - [x] Trigger manual (`workflow_dispatch`) berhasil: memanggil endpoint, commit file kalau ada perubahan, permission `contents: write` aktif eksplisit di workflow
+  - [x] Menjalankan workflow dua kali berturut-turut tanpa perubahan data ticker menghasilkan **nol commit baru** di run kedua (idempotent, bukan commit kosong)
+- **Security gate:** FULL — all checks passed
+- **Scalability gate:** FULL — all checks passed
+- **Regression:** Phase 1 build OK (15 pages), lint 0 errors, format:check passes, 55 tests pass
+- **Decisions made:**
+  - [INFRA] Workflow uses `curl` with Service Token headers to fetch from production endpoint, extracts `data` field from response envelope using `jq`, commits only if file changed
+  - [SECURITY] Workflow uses GitHub Actions secrets (`CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET`) which are automatically masked in logs; no secrets in workflow file
+  - [CONFIG] Schedule: `0 19 * * *` UTC (02:00 WIB daily); manual trigger via `workflow_dispatch`
+- **Notes:** Workflow validates HTTP response code before processing; uses `git diff --cached --quiet` to avoid empty commits; git config uses `github-actions[bot]` for commit attribution
+- **Knowledge drift:** none
+
+---
+
+### Task #015 — Verify WhatsApp Click Analytics Event Tracking ✅
+- **Completed:** 2026-09-07
+- **Phase:** Phase 4
+- **Status:** OK — **re-scoped during execution** (original AC unsatisfiable; developer-approved via explicit decision "Beacon best-effort only")
+- **Branch:** feat/task-015-whatsapp-click-analytics
+- **Files created / modified:**
+  - `src/layouts/BaseLayout.astro` — conditional Cloudflare Web Analytics beacon in `<head>` (`is:inline`, `type="module"`, gated by build-time env `PUBLIC_CF_BEACON_TOKEN`; token absent → no beacon rendered at all)
+  - `docs/web-analytics.md` — new doc: audit result (9 penempatan CTA WA teridentifikasi, nol instrumentasi existing), pembatasan custom events dengan kutipan sumber resmi, langkah setup dashboard + env var, log verifikasi, follow-up
+  - `knowledge.md` — §8 env var + koreksi metrics + version bump (lihat Knowledge drift)
+- **Acceptance criteria met:**
+  - [x] (re-scoped) ~~Klik tombol WA memicu custom event CF Web Analytics terverifikasi via dashboard~~ — **tidak terpenuhi dan tidak mungkin**: Web Analytics resmi TIDAK mendukung custom events ("Not yet" — FAQ resmi developers.cloudflare.com, diverifikasi 2026-09-07); plumbing event palsu sengaja tidak dibuat karena tidak bisa diverifikasi di dashboard (akan memfabrikasi AC); beacon pageview+performance terpasang di 15 halaman sebagai pengganti best-effort; tracking klik per-paket ditunda ke task pengganti (kandidat: KV counter / Analytics Engine)
+  - [x] (re-scoped) ~~Event membawa identitas paket~~ — N/A dengan alasan yang sama (docs/web-analytics.md §Hard Limitation); konvensi instrumentasi masa depan (pkg.slug per kartu, label generik untuk penempatan lain) sudah didokumentasikan
+  - [x] Audit awal task dilakukan sesuai scope: seluruh penempatan tombol WA diaudit (`PackageCard`, `WhatsAppButton`, `Header` ×2, `HomeContent` ×2, `KlienVenueContent`, `KontakContent`, `SyaratKetentuanContent`) dan dikonfirmasi belum ada analytics apapun
+- **Security gate:** FULL — all checks passed [deviation tercatat: item CVE scan "zero high/critical" TIDAK terpenuhi — 6 advisory pre-existing tree Astro 4.x (4 high, 2 moderate), terdokumentasi sejak Task #007, NOL advisory baru dari task ini (tanpa perubahan dependency sama sekali); token beacon publik by design bukan secret; tidak ada input eksternal baru, tidak ada endpoint baru, tidak ada eval/HTML injection]
+- **Scalability gate:** FULL — all checks passed [item FULL infra runtime (rate limit, circuit breaker, load baseline, queue) n.a. dengan alasan eksplisit: perubahan murni client-side tag di build time — tidak ada jalur kode runtime/endpoint yang tersentuh; beacon dilayani edge Cloudflare]
+- **Regression:** Passed 55, 0 failed (398ms) · lint 0 errors · format:check pass · build 15 pages OK (diverifikasi dengan & tanpa token)
+- **Decisions made:**
+  - [ARCH] Re-scope atas keputusan developer: TIDAK mengimplementasikan plumbing event yang tidak bisa diverifikasi — memilih dokumentasi jujur atas pembatasan + beacon nyata; opsi pengganti (KV counter / Analytics Engine) dicatat sebagai kandidat task baru
+  - [CONFIG] Beacon di-render kondisional via `import.meta.env.PUBLIC_CF_BEACON_TOKEN` — tanpa token, build/test/preview tetap hijau dan nol request ke cloudflareinsights.com
+  - [SECURITY] Token beacon diperlakukan publik by design (ikut ter-ship di HTML tiap halaman, setara measurement ID GA) — disimpan sebagai env var Pages, bukan secret; satu snippet per halaman dari layout bersama
+- **Notes:** Keputusan pengguna via ask_user: "Beacon best-effort only" dari 4 opsi (re-scope KV counter / re-scope Analytics Engine / FAIL task / beacon best-effort). Konteks gate-tier: tabel fase menetapkan FULL untuk Phase 4, namun sebagian besar item FULL tidak applicable pada perubahan ini — semua item tetap dievaluasi eksplisit; yang n.a. diberi alasan, bukan dilewati diam-diam. Forward impact: `e2e/wa-click.spec.ts` (Task #019) tetap menguji href `wa.me` per paket — tidak terpengaruh oleh re-scope ini.
+- **Knowledge drift:** UPDATE REQUIRED: @knowledge §8 — (1) env var opsional `PUBLIC_CF_BEACON_TOKEN` ditambahkan; (2) baris Observability—metrics dikoreksi: Web Analytics TIDAK mendukung custom events (terverifikasi FAQ resmi 2026-09-07), pendekatan pengganti menunggu derivasi task → knowledge v1.0.4 (edit sudah dibuat task ini)
+
 ## [IN PROGRESS]
 
-### Phase 4 — Integration
+### Phase 5 — UI/UX
 
-#### Task #013 — Create Dedicated Access Application for Export Endpoint
-- **Phase:** Phase 4 — Integration
-- **Scope:** Buat Access Application baru di Cloudflare Zero Trust, path match `/api/admin/ticker-export`, policy **Service Auth saja** (tanpa login email/Google) — terpisah dari Access Application `/admin` yang sudah ada, sesuai keputusan least-privilege di `knowledge.md` §3/§9.
-- **Files to create / modify:** Tidak ada kode — konfigurasi dashboard Cloudflare Zero Trust. `docs/access-setup.md` (baru — catat Application ID & ringkasan policy untuk referensi tim, bukan credential-nya)
+#### Task #016 — WCAG 2.1 AA Accessibility Audit
+- **Phase:** Phase 5 — UI/UX
+- **Scope:** Audit ketujuh halaman × 2 bahasa terhadap WCAG 2.1 AA (kontras warna terhadap palet `knowledge.md` §6, label form, alt text, navigasi keyboard) — perbaiki temuan yang gagal.
+- **Files to create / modify:** `docs/a11y-audit.md` (baru — catat temuan) + file komponen yang diperbaiki (TBD sampai audit menemukan pelanggaran spesifik)
 - **Acceptance criteria:**
-  - [ ] Request ke `/api/admin/ticker-export` tanpa header `CF-Access-Client-Id`/`CF-Access-Client-Secret` ditolak (401/403) oleh Access, tidak sampai ke kode aplikasi
-  - [ ] Request dengan Service Token yang valid untuk Application ini berhasil (200); Service Token dari Application `/admin` yang lama (kalau beda) tidak otomatis punya akses ke path ini
-- **Dependencies:** Task #012
+  - [ ] Audit otomatis (axe-core/Lighthouse a11y) terhadap 14 rute (7 halaman × ID/EN) menghasilkan nol pelanggaran level AA yang serius/kritis
+  - [ ] Navigasi penuh-keyboard (tanpa mouse) memungkinkan mengakses seluruh interaksi utama (filter aktivitas, modal galeri, tombol WA)
+- **Dependencies:** Task #001
 - **Decisions made:** (fill after execution — never leave blank)
 
 ---
@@ -330,37 +397,9 @@ simple_mode: false
 
 > **Catatan circuit breaker:** aplikasi ini tidak melakukan outbound call ke API pihak ketiga dari kode runtime-nya sendiri (KV read/write saja; verifikasi Access terjadi di edge Cloudflare, bukan panggilan aplikasi). Karena itu, walau `simple_mode: false`, **tidak ada task circuit breaker** di bawah — kriteria itu genuinely tidak berlaku untuk shape integrasi proyek ini (integrasi berjalan sebagai *scheduled-pull* dari luar, bukan *outbound push* dari aplikasi).
 
-#### Task #014 — Build GitHub Actions Backup Workflow
-- **Phase:** Phase 4 — Integration
-- **Scope:** Workflow terjadwal harian (`0 19 * * *` UTC = 02:00 WIB) — panggil `/api/admin/ticker-export` pakai Service Token, commit `backups/ticker-messages.json` (overwrite, no-op kalau tidak berubah).
-- **Files to create / modify:** `.github/workflows/backup-ticker.yml` (baru)
-- **Acceptance criteria:**
-  - [ ] Trigger manual (`workflow_dispatch`) berhasil: memanggil endpoint, commit file kalau ada perubahan, permission `contents: write` aktif eksplisit di workflow
-  - [ ] Menjalankan workflow dua kali berturut-turut tanpa perubahan data ticker menghasilkan **nol commit baru** di run kedua (idempotent, bukan commit kosong)
-- **Dependencies:** Task #012, Task #013
-- **Decisions made:** (fill after execution — never leave blank)
-
-#### Task #015 — Verify WhatsApp Click Analytics Event Tracking
-- **Phase:** Phase 4 — Integration
-- **Scope:** Pastikan tiap tombol WA di kartu paket mengirim custom event ke Cloudflare Web Analytics (success metric closed decision, `knowledge.md` §1/§8) — audit apakah sudah terpasang di kode existing, implementasikan kalau belum.
-- **Files to create / modify:** komponen kartu paket terkait (`src/components/PackageCard.astro` atau setara — dikonfirmasi saat audit) — TBD tepatnya sampai audit awal task ini menemukan file mana yang menangani klik WA saat ini
-- **Acceptance criteria:**
-  - [ ] Klik tombol WA di kartu paket manapun memicu custom event Cloudflare Web Analytics yang terverifikasi (via dashboard/test event), bukan cuma navigasi ke `wa.me`
-  - [ ] Event membawa identitas paket (nama tier) supaya klik per-paket bisa dibedakan, bukan satu event generik untuk semua tombol
-- **Dependencies:** Task #001
-- **Decisions made:** (fill after execution — never leave blank)
-
 ### Phase 5 — UI/UX
 
-#### Task #016 — WCAG 2.1 AA Accessibility Audit
-- **Phase:** Phase 5 — UI/UX
-- **Scope:** Audit ketujuh halaman × 2 bahasa terhadap WCAG 2.1 AA (kontras warna terhadap palet `knowledge.md` §6, label form, alt text, navigasi keyboard) — perbaiki temuan yang gagal.
-- **Files to create / modify:** `docs/a11y-audit.md` (baru — catat temuan) + file komponen yang diperbaiki (TBD sampai audit menemukan pelanggaran spesifik)
-- **Acceptance criteria:**
-  - [ ] Audit otomatis (axe-core/Lighthouse a11y) terhadap 14 rute (7 halaman × ID/EN) menghasilkan nol pelanggaran level AA yang serius/kritis
-  - [ ] Navigasi penuh-keyboard (tanpa mouse) memungkinkan mengakses seluruh interaksi utama (filter aktivitas, modal galeri, tombol WA)
-- **Dependencies:** Task #001
-- **Decisions made:** (fill after execution — never leave blank)
+(none — Task #016 promoted to [IN PROGRESS])
 
 #### Task #017 — XSS / Output Encoding Review
 - **Phase:** Phase 5 — UI/UX

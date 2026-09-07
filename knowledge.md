@@ -1,8 +1,8 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
-version: 1.0.2
+version: 1.0.4
 source: prd
-last_updated: 2026-09-05
+last_updated: 2026-09-07
 project_shape: fullstack
 simple_mode: false
 external_assets: true
@@ -52,6 +52,7 @@ external_assets: true
   └── health.ts                # GET, publik
   public/img/        # logo/favicon situs sendiri saja — tidak pernah R2-backed
   e2e/               # Playwright E2E specs — smoke placeholder sejak Phase 1, suite lengkap di Task #019
+  docs/              # project documentation — audit-baseline.md, access-setup.md, (api.yaml di Task #027)
   .husky/pre-commit   # pre-commit hook: blokir file secret + lint-staged (husky v9, Phase 1)
   playwright.config.ts  # E2E runner — base URL dioverride via env E2E_BASE_URL (lokal vs preview)
   vitest.config.ts   # unit test runner config (Vitest, Phase 1)
@@ -137,11 +138,12 @@ external_assets: true
 
 ## 8. Environment & Configuration
 - Required env vars (Cloudflare Pages): `CLASSMATE_KV` (KV namespace binding) — tidak ada lagi `CLASSMATE_ASSETS`/R2
+- Optional build-time env var (Cloudflare Pages): `PUBLIC_CF_BEACON_TOKEN` — token beacon Cloudflare Web Analytics. Publik by design (ikut ter-ship di HTML setiap halaman, seperti measurement ID GA), BUKAN secret. Tidak diset → beacon tidak di-render, situs berjalan normal tanpa analytics.
 - Required secrets (GitHub Actions repository secrets, terpisah dari Cloudflare): `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET` (dari Access Service Token khusus endpoint export)
 - Feature flags: tidak ada di Fase 1
 - Observability — logging: Cloudflare Pages Functions real-time log bawaan, tidak ada structured JSON logger, tidak ada agregasi eksternal
 - Observability — error tracking: none Fase 1; Sentry free tier = opsi Fase 2, belum diimplementasikan
-- Observability — metrics: Cloudflare Web Analytics (custom event klik WA) + Cloudflare Analytics bawaan
+- Observability — metrics: Cloudflare Web Analytics **beacon** (pageview + performance, cookie-less, dikondisikan `PUBLIC_CF_BEACON_TOKEN` di BaseLayout.astro) + Cloudflare Analytics bawaan. **TERVERIFIKASI 2026-09-07 di FAQ resmi: Web Analytics TIDAK mendukung custom events** ("Not yet") — tracking klik WA per-paket (success metric closed decision) belum mungkin lewat produk ini; pendekatan pengganti (KV counter / Analytics Engine) menunggu derivasi task baru. Lihat docs/web-analytics.md.
 - Observability — alerting: tidak ada untuk situs utama; kegagalan workflow backup cukup notifikasi email bawaan GitHub Actions ke pemilik repo, tidak ada channel tambahan (Slack, dll.)
 - Health check endpoint: single, non-orchestrated — `GET /api/health` → `{ status, kv_reachable }`
 - Build pipeline: Cloudflare Pages native Git integration — auto-deploy tiap push ke `main`, preview deployment tiap PR; **jalur terpisah** dari GitHub Actions scheduled workflow (backup harian) — dua pipeline independen, kegagalan satu tidak mem-block yang lain
