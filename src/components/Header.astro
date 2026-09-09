@@ -87,11 +87,60 @@ const navItems = [
   const iconOpen = document.getElementById('icon-open');
   const iconClose = document.getElementById('icon-close');
 
+  function getFocusableElements() {
+    if (!menu) return [];
+    return Array.from(
+      menu.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+    );
+  }
+
+  function handleMenuKeydown(e: KeyboardEvent) {
+    if (e.key !== 'Tab' || !menu?.classList.contains('hidden') === false) return;
+    const focusable = getFocusableElements();
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      }
+    } else {
+      if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  }
+
   toggle?.addEventListener('click', () => {
     const isOpen = menu?.classList.contains('hidden') === false;
     menu?.classList.toggle('hidden');
     iconOpen?.classList.toggle('hidden');
     iconClose?.classList.toggle('hidden');
     toggle.setAttribute('aria-expanded', String(!isOpen));
+
+    if (!isOpen) {
+      // Menu just opened — focus first link
+      const firstLink = menu?.querySelector<HTMLElement>('a[href]');
+      firstLink?.focus();
+      menu?.addEventListener('keydown', handleMenuKeydown);
+    } else {
+      menu?.removeEventListener('keydown', handleMenuKeydown);
+      toggle.focus();
+    }
+  });
+
+  // Close menu on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && menu && !menu.classList.contains('hidden')) {
+      menu.classList.add('hidden');
+      iconOpen?.classList.remove('hidden');
+      iconClose?.classList.add('hidden');
+      toggle?.setAttribute('aria-expanded', 'false');
+      toggle?.focus();
+      menu.removeEventListener('keydown', handleMenuKeydown);
+    }
   });
 </script>

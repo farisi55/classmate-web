@@ -17,14 +17,14 @@ const enHref = lang === 'en' ? currentPath : `/en${currentPath}`.replace(/\/en\/
   <a
     href={idHref}
     class:list={['px-2.5 py-1 rounded-full transition-colors', lang === 'id' ? 'bg-folly text-white' : 'text-ink-soft hover:text-ink']}
-    aria-current={lang === 'id' ? 'true' : undefined}
+    aria-current={lang === 'id' ? 'page' : undefined}
   >
     {uiStrings.languageSwitcher.id}
   </a>
   <a
     href={enHref}
     class:list={['px-2.5 py-1 rounded-full transition-colors', lang === 'en' ? 'bg-folly text-white' : 'text-ink-soft hover:text-ink']}
-    aria-current={lang === 'en' ? 'true' : undefined}
+    aria-current={lang === 'en' ? 'page' : undefined}
   >
     {uiStrings.languageSwitcher.en}
   </a>
