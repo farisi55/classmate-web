@@ -62,9 +62,15 @@ const cfBeaconToken: string | undefined = import.meta.env.PUBLIC_CF_BEACON_TOKEN
     ) : null}
   </head>
   <body>
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-sm focus:bg-folly focus:px-4 focus:py-2 focus:text-white focus:shadow-lift"
+    >
+      {lang === 'id' ? 'Langsung ke konten' : 'Skip to content'}
+    </a>
     <RunningTicker lang={lang} />
     <Header lang={lang} />
-    <main>
+    <main id="main-content">
       <slot />
     </main>
     <Footer lang={lang} />

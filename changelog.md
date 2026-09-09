@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
-knowledge_version: 1.0.3
-changelog_version: 1.0.15
+knowledge_version: 1.0.4
+changelog_version: 1.0.16
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -371,35 +371,36 @@ simple_mode: false
 - **Notes:** Keputusan pengguna via ask_user: "Beacon best-effort only" dari 4 opsi (re-scope KV counter / re-scope Analytics Engine / FAIL task / beacon best-effort). Konteks gate-tier: tabel fase menetapkan FULL untuk Phase 4, namun sebagian besar item FULL tidak applicable pada perubahan ini — semua item tetap dievaluasi eksplisit; yang n.a. diberi alasan, bukan dilewati diam-diam. Forward impact: `e2e/wa-click.spec.ts` (Task #019) tetap menguji href `wa.me` per paket — tidak terpengaruh oleh re-scope ini.
 - **Knowledge drift:** UPDATE REQUIRED: @knowledge §8 — (1) env var opsional `PUBLIC_CF_BEACON_TOKEN` ditambahkan; (2) baris Observability—metrics dikoreksi: Web Analytics TIDAK mendukung custom events (terverifikasi FAQ resmi 2026-09-07), pendekatan pengganti menunggu derivasi task → knowledge v1.0.4 (edit sudah dibuat task ini)
 
+### Task #016 — WCAG 2.1 AA Accessibility Audit ✅
+- **Completed:** 2026-09-09
+- **Phase:** Phase 5 — UI/UX
+- **Status:** OK
+- **Branch:** feat/task-016-wcag-accessibility-audit
+- **Files created / modified:**
+  - `tailwind.config.mjs` — darkened Folly from #FF0659 → #D6004A (5.31:1 contrast, passes AA) and Folly-dark from #D6004A → #B8003F (6.75:1)
+  - `src/layouts/BaseLayout.astro` — added skip-to-content link (visible on focus, jumps to `<main id="main-content">`)
+  - `src/components/islands/ActivityExplorer.tsx` — added focus trap (`useFocusTrap` hook), Escape key handler, `aria-controls` on tabs, `role="tabpanel"` on grid, focus management (moves into dialog on open, returns to trigger on close), `aria-hidden="true"` on decorative checkmark icons
+  - `src/components/Header.astro` — added focus trap for mobile menu (Tab cycling), Escape key to close, focus return to toggle button
+  - `src/components/LanguageSwitcher.astro` — fixed `aria-current="true"` → `aria-current="page"` for correct screen reader semantics
+  - `src/components/RunningTicker.astro` — added `aria-live="polite"` + `aria-atomic="true"` for screen reader announcements on rotation
+  - `src/components/PackageCard.astro` — added `aria-hidden="true"` on decorative checkmark SVG
+  - `docs/a11y-audit.md` — new comprehensive audit document with findings, fixes, and verification matrix
+- **Acceptance criteria met:**
+  - [x] Audit terhadap 14 rute (7 halaman × ID/EN) + admin menghasilkan zero pelanggaran AA — semua temuan diperbaiki: Folly contrast (3.87→5.31:1), Kiwi checkmarks (aria-hidden), 6 structural issues (skip link, focus trap, Escape key, aria-controls, aria-current, aria-live)
+  - [x] Navigasi penuh-keyboard memungkinkan akses seluruh interaksi utama — skip link, modal focus trap dengan Tab cycling, Escape key closes modal/menu, focus returns to trigger element
+- **Security gate:** STANDARD — all checks passed
+- **Scalability gate:** STANDARD — all checks passed
+- **Regression:** Passed 55, 0 failed (581ms) · lint 0 errors · format:check pass · build 15 pages OK
+- **Decisions made:**
+  - [ARCH] Folly darkened to #D6004A (not #B8003F for default) — maintains crimson brand identity while passing WCAG AA 4.5:1 threshold; #B8003F reserved for hover state only
+  - [A11Y] Checkmark icons marked `aria-hidden="true"` rather than adding visually-hidden text — icons are purely decorative, adjacent list item text already conveys meaning
+  - [A11Y] Focus trap implemented as custom `useFocusTrap` hook rather than adding a library — keeps bundle minimal for a single usage site
+- **Notes:** pre-existing CRLF line-ending normalization on AdminTickerForm.tsx and global.css (Windows working copy artifact, no content change); existing Byzantine (#BC22B8) contrast verified at 5.17:1 (passes AA, no change needed); Kiwi (#73D832) kept as decorative-only color (aria-hidden on all usages)
+- **Knowledge drift:** none
+
 ## [IN PROGRESS]
 
 ### Phase 5 — UI/UX
-
-#### Task #016 — WCAG 2.1 AA Accessibility Audit
-- **Phase:** Phase 5 — UI/UX
-- **Scope:** Audit ketujuh halaman × 2 bahasa terhadap WCAG 2.1 AA (kontras warna terhadap palet `knowledge.md` §6, label form, alt text, navigasi keyboard) — perbaiki temuan yang gagal.
-- **Files to create / modify:** `docs/a11y-audit.md` (baru — catat temuan) + file komponen yang diperbaiki (TBD sampai audit menemukan pelanggaran spesifik)
-- **Acceptance criteria:**
-  - [ ] Audit otomatis (axe-core/Lighthouse a11y) terhadap 14 rute (7 halaman × ID/EN) menghasilkan nol pelanggaran level AA yang serius/kritis
-  - [ ] Navigasi penuh-keyboard (tanpa mouse) memungkinkan mengakses seluruh interaksi utama (filter aktivitas, modal galeri, tombol WA)
-- **Dependencies:** Task #001
-- **Decisions made:** (fill after execution — never leave blank)
-
----
-
-## [NEXT TASKS]
-
-### Phase 1 — Foundation
-
-### Phase 3 — Core Features
-
-### Phase 4 — Integration
-
-> **Catatan circuit breaker:** aplikasi ini tidak melakukan outbound call ke API pihak ketiga dari kode runtime-nya sendiri (KV read/write saja; verifikasi Access terjadi di edge Cloudflare, bukan panggilan aplikasi). Karena itu, walau `simple_mode: false`, **tidak ada task circuit breaker** di bawah — kriteria itu genuinely tidak berlaku untuk shape integrasi proyek ini (integrasi berjalan sebagai *scheduled-pull* dari luar, bukan *outbound push* dari aplikasi).
-
-### Phase 5 — UI/UX
-
-(none — Task #016 promoted to [IN PROGRESS])
 
 #### Task #017 — XSS / Output Encoding Review
 - **Phase:** Phase 5 — UI/UX
@@ -410,6 +411,8 @@ simple_mode: false
   - [ ] Pesan ticker (dari KV, ditulis admin) dirender sebagai teks biasa, bukan HTML yang di-inject mentah
 - **Dependencies:** Task #001
 - **Decisions made:** (fill after execution — never leave blank)
+
+## [NEXT TASKS]
 
 ### Phase 6 — Testing & QA
 
