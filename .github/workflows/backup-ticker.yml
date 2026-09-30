@@ -19,7 +19,7 @@ jobs:
         id: fetch
         run: |
           mkdir -p backups
-          RESPONSE=$(curl -s -w "\n%{http_code}" \
+          RESPONSE=$(curl -s --max-time 60 -w "\n%{http_code}" \
             -H "CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}" \
             -H "CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
             "https://classmate.co.id/api/admin/ticker-export")
