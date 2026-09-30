@@ -16,6 +16,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "check:routes": "node scripts/check-route-parity.mjs",
     "prepare": "husky"
   },
   "dependencies": {

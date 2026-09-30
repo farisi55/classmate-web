@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
 knowledge_version: 1.0.5
-changelog_version: 1.0.19
+changelog_version: 1.0.20
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -491,27 +491,35 @@ simple_mode: false
 - **Notes:** 1 iterasi perbaikan (attempt 1 dari maks 2) setelah run pertama 11/22 — akar masalah: race hidrasi island, selector global vs CTA tambahan halaman, dan asumsi keliru bahwa fixture #011 cocok slug nyata. Peringatan `format:check` pada 4 file tracked adalah artifact CRLF `core.autocrlf` Windows (blob LF di HEAD, `git diff HEAD` kosong — preseden terdokumentasi #004/#017/#018), tidak ter-commit sebagai perubahan.
 - **Knowledge drift:** none
 
+### Task #020 — Bilingual Route Parity Regression Check ✅
+- **Completed:** 2026-09-30
+- **Phase:** Phase 6 — Testing & QA
+- **Status:** OK
+- **Branch:** feat/task-020-bilingual-route-parity-check
+- **Files created / modified:**
+  - `scripts/check-route-parity.mjs` — **baru**: modul parity rute bilingual — discovery rekrusif `src/pages/**/*.astro`, split ID/`en/` dengan exclusion `admin/` (single-locale by design), `checkParity()` murni dua arah, `fileToRoute()` (index.astro → `/`), CLI `main()` exit 1 + daftar pelanggaran kalau timpang; logika diekspor sebagai satu sumber kebenaran untuk unit test & E2E
+  - `scripts/check-route-parity.test.ts` — **baru**: 13 unit test — konversi rute (termasuk tanpa trailing slash), exclusion admin, parity dua arah + no-false-positive, discovery tree nyata (15 file = 7+7+admin), dan **negative test CLI**: halaman ID tanpa padanan EN dibuat sementara → `main()` mengembalikan 1 → cleanup `finally`
+  - `e2e/route-parity.spec.ts` — **baru**: spec Playwright yang memverifikasi rute yang benar-benar dilayani HTTP — loop tiap rute ID+EN dari modul discovery (tanpa daftar rute kedua): status <400, `main` + `main h1` visible, identitas halaman berpasangan via title tanpa suffix " — Classmate"
+  - `package.json` — script `check:routes` → `node scripts/check-route-parity.mjs`
+  - `.github/workflows/ci.yml` — step baru "Bilingual route parity check" (`npm run check:routes`) setelah unit tests, sebelum build
+- **Acceptance criteria met:**
+  - [x] Test/skrip menemukan seluruh rute di `src/pages/` (non-`en/`) dan memverifikasi padanan `en/` ada untuk masing-masing, gagal (exit non-zero) kalau ada yang timpang — verified dua arah: CLI mengembalikan 0 untuk tree saat ini (7 ID = 7 EN), dan **1** pada fixture asimetris sementara (`zz-parity-fixture.astro` tanpa padanan) — ditest di unit test, bukan asumsi
+  - [x] Dijalankan sebagai bagian CI (Task #006), bukan langkah manual terpisah — step `check:routes` ditambahkan ke `ci.yml` job `ci`, akan jalan di push/PR main & dev (di luar jalur task ini: run CI pertama diverifikasi saat push merge ke dev)
+- **Security gate:** FULL — all checks passed [0 simple-mode skips; 1 deviation carried: CVE pre-existing tree Astro 4.x (tanpa perubahan dependency sama sekali task ini), terdokumentasi #018; item lain n.a. dengan justifikasi — script baca filesystem repo, tanpa input user/HTTP/DB]
+- **Scalability gate:** FULL — all checks passed [item runtime n.a. dengan justifikasi; load baseline tetap Task #024 per deferral terdokumentasi]
+- **Regression:** Passed 80 unit (13 baru) · 31 E2E (9 baru) · `check:routes` exit 0 · lint 0 error · build 15 halaman OK · 1 fix iteration (attempt 1/2)
+- **Decisions made:**
+  - [ARCH] Bentuk implementasi "keduanya" (keputusan user via ask_user) dengan **satu sumber kebenaran**: `scripts/check-route-parity.mjs` mengekspor discovery + parity; CLI, unit test, dan E2E spec mengimpornya — tidak ada daftar rute kedua, mencegah drift antar lapisan verifikasi
+  - [TEST] Negative test AC "exit non-zero" dilakukan lewat unit test yang membuat halaman ID asimetris sementara (`finally` cleanup) — membuktikan kontrak exit-code tanpa menunggu kegagalan CI sungguhan
+  - [TEST] E2E parity memverifikasi rute **yang dilayani** (status <400 + `main h1` visible) alih-alih menduplikasi logika filesystem — unit test sudah membuktikan kesimetrisan file; E2E menangkap kelas bug berbeda (rute ada tapi tidak ter-render/404 saat runtime)
+  - [ARCH] `admin/index.astro` di-exclude dari kedua sisi via konstanta `LOCALE_EXCLUDED_DIRS` — dashboard admin memang single-locale (en/ tidak punya mirror), sehingga growth rute admin di masa depan tidak memicu false positive
+  - [CODE] Success path CLI memakai `console.warn` (bukan `console.log`) — eslint `no-console` hanya mengizinkan warn/error; CI log tetap terbaca, exit code tetap 0
+- **Notes:** 1 iterasi perbaikan (attempt 1 dari maks 2): `fileToRoute` meninggalkan trailing slash pada nested index (`/en/sub/`) dan hitungan asersi test awal salah menghitung sisi ID (8 padahal `splitLocales` sudah mengecualikan admin → 7). Peringatan `format:check` pada 7 file tracked adalah artifact CRLF `core.autocrlf` Windows (blob LF di HEAD, `git diff HEAD` kosong per file — preseden #004/#017/#018/#019), tidak ter-commit.
+- **Knowledge drift:** none
+
 ## [IN PROGRESS]
 
-### Phase 6 — Testing & QA
-
-#### Task #020 — Bilingual Route Parity Regression Check
-- **Phase:** Phase 6 — Testing & QA
-- **Scope:** Verifikasi otomatis bahwa ketujuh halaman punya padanan ID dan `/en` (hard constraint `knowledge.md`), mencegah regresi kalau ada halaman baru ditambah tanpa versi bahasa satunya.
-- **Files to create / modify:** `e2e/route-parity.spec.ts` (baru) — atau skrip Node ringan di `scripts/check-route-parity.mjs` kalau lebih sesuai dari sekadar E2E test (dipilih saat eksekusi)
-- **Acceptance criteria:**
-  - [ ] Test/skrip menemukan seluruh rute di `src/pages/` (non-`en/`) dan memverifikasi padanan `en/` ada untuk masing-masing, gagal (exit non-zero) kalau ada yang timpang
-  - [ ] Dijalankan sebagai bagian CI (Task #006), bukan langkah manual terpisah
-- **Dependencies:** Task #005, Task #006
-- **Decisions made:** (fill after execution — never leave blank)
-
-## [NEXT TASKS]
-
 ### Phase 7 — Deployment (Server variant)
-
-> (Task #020 — Bilingual Route Parity — dipromosikan ke [IN PROGRESS] saat Task #019 selesai; sub-header "Phase 6 — Testing & QA" dihapus dari seksi ini karena Phase 6 kini kosong dari task tersisa.)
-
-> SIGTERM graceful-drain (kriteria standar template untuk server tradisional) **tidak berlaku** untuk shape ini — Cloudflare Pages Functions berjalan di isolate model Workers, tanpa proses persisten yang menerima SIGTERM; siklus hidup request ditangani penuh oleh platform. Kriteria itu sengaja tidak dijadikan task.
 
 #### Task #021 — Application Version Tagging & Redeploy Test
 - **Phase:** Phase 7 — Deployment
@@ -522,6 +530,12 @@ simple_mode: false
   - [ ] Redeploy dari tag versi sebelumnya (simulasi) selesai dalam <10 menit lewat dashboard Cloudflare Pages
 - **Dependencies:** Task #006
 - **Decisions made:** (fill after execution — never leave blank)
+
+## [NEXT TASKS]
+
+### Phase 7 — Deployment (Server variant)
+
+> SIGTERM graceful-drain (kriteria standar template untuk server tradisional) **tidak berlaku** untuk shape ini — Cloudflare Pages Functions berjalan di isolate model Workers, tanpa proses persisten yang menerima SIGTERM; siklus hidup request ditangani penuh oleh platform. Kriteria itu sengaja tidak dijadikan task.
 
 #### Task #022 — Document & Test Rollback Procedure
 - **Phase:** Phase 7 — Deployment
