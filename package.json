@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro check && astro build",
+    "build": "astro check && astro build && node scripts/generate-headers.mjs",
     "deploy": "npx wrangler pages deploy dist",
     "preview": "astro preview",
     "astro": "astro",

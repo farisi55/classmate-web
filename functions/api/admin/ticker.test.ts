@@ -631,4 +631,39 @@ describe('POST /api/admin/ticker — payload validation', () => {
     expect(writtenValue[0].id).toBe('unique-1');
     expect(writtenValue[0].updated_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
+
+  // --- Retryable operation: same event twice → same outcome (knowledge §7) ---
+
+  it('is idempotent on replay: same payload twice overwrites to the same state', async () => {
+    const env = { CLASSMATE_KV: makeKV() };
+    const messages = [
+      validMessage({ id: 'retry-1' }),
+      validMessage({ id: 'retry-2', priority: 2 }),
+    ];
+    const handler = (await import('./ticker')).onRequestPost;
+    const post = () =>
+      handler({
+        request: makePostRequest({ data: messages }),
+        env,
+      } as Parameters<NonNullable<typeof import('./ticker').onRequestPost>[0]>);
+
+    const first = await post();
+    const second = await post();
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    // Full overwrite, twice: KV holds exactly the payload (no duplicates/merge),
+    // under the same key both times — retry leaves the same end state.
+    const put = env.CLASSMATE_KV.put as ReturnType<typeof vi.fn>;
+    expect(put).toHaveBeenCalledTimes(2);
+    expect(put.mock.calls[0][0]).toBe('ticker:messages');
+    expect(put.mock.calls[1][0]).toBe('ticker:messages');
+    const stored = JSON.parse(put.mock.calls[1][1]);
+    expect(stored).toHaveLength(2);
+    expect(stored.map((m: { id: string }) => m.id)).toEqual(['retry-1', 'retry-2']);
+    expect(JSON.parse(put.mock.calls[0][1]).map((m: { id: string }) => m.id)).toEqual([
+      'retry-1',
+      'retry-2',
+    ]);
+  });
 });

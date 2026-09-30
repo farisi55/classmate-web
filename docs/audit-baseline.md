@@ -63,3 +63,39 @@ Grep over `src/`, `functions/` for `set:html`, `dangerouslySetInnerHTML`, `inner
 - **Ticker rendering (admin-written KV data)** — the AC's risk case: server-rendered default passes through Astro `{expr}` (auto-escaped); client rotation sets `textEl.textContent = …` (text node, not HTML); admin form uses React controlled inputs (React-escaped). No raw HTML injection path.
 
 **Conclusion:** Environment audit complete. No hardcoded secrets detected. `.gitignore` updated to protect sensitive files. KV binding confirmed operational. XSS audit: one documented-safe `set:html`, zero unsafe sinks. Project proceeds to subsequent tasks with security baseline established.
+
+---
+
+## Test Coverage Verification (Task #018, 2026-09-30)
+
+`npm run test:coverage` (Vitest v8, scope `functions/**` + `src/lib/**` per knowledge §4):
+
+| File | Lines | Branches | Status |
+|---|---|---|---|
+| `functions/api/health.ts` | 100% (9/9) | 100% (4/4) | ≥70% ✓ |
+| `functions/api/ticker.ts` | **62% (8/13)** | **33% (3/9)** | **BELOW 70% — technical debt (see below)** |
+| `functions/api/admin/ticker-export.ts` | 100% (12/12) | 100% (8/8) | ≥70% ✓ |
+| `functions/api/admin/ticker.ts` | 95% (19/20) | 100% (19/19) | ≥70% ✓ |
+| `src/lib/media.ts` | 100% (19/19) | 83% (5/6) | ≥70% ✓ |
+| `src/lib/types.ts` | n/a (type-only) | n/a | no executable code |
+| **Aggregate `functions/`** | **89% (48/54)** | **85% (34/40)** | **≥70% ✓** |
+| **Aggregate `src/lib/`** | **100% (19/19)** | **83% (5/6)** | **≥70% ✓** |
+| **All files** | **92% stmts / 92% lines** | **85% branches** | **100% functions** |
+
+**AC met:** both `functions/` and `src/lib/` aggregates are ≥70%.
+
+### Technical debt (explicit, per AC — not silently skipped)
+
+1. **`functions/api/ticker.ts` (GET /api/ticker) — 62% lines / 33% branches, below the 70% target.** Uncovered: lines 49–51 (KV read success path) and 58–59 (read-failure error path) — the public ticker endpoint has no dedicated happy-path/error-path unit test (only its KV-binding guard is exercised via `health.test.ts`). Debt: add `ticker.test.ts` covering success + KV-failure responses.
+2. **`src/lib/media.ts` branch coverage 83%** — single uncovered branch (line 115) in path matching; above the line target, recorded for completeness.
+3. **Historical:** `npm audit` pre-existing advisories tracked below.
+
+## Dependency CVE Status (Task #018 gate, updated 2026-09-30)
+
+- Before task: **10 vulnerabilities (3 moderate, 6 high, 1 critical)** — grown since Task #007's 6 (new advisories published against the pinned Astro 4.x tree).
+- `npm audit fix` (non-breaking, lockfile-only) applied: **reduced to 5 (2 moderate, 2 high, 1 critical)** — fixed `brace-expansion` (high), `fast-uri` (high), `devalue` (moderate), others within semver ranges. All 67 tests + build green after the bump.
+- **Remaining 5: `astro <=7.2.7` (critical), `sharp <=0.35.x` (high), `esbuild <=0.24.2` (moderate) — fixable only via `astro@7.3.5`, a breaking major that conflicts with knowledge.md §2 (`Astro 4.x`).** Runtime exposure analysis: this project is `output: 'static'` — Astro never runs in production; the advisories target the dev server, SSR/middleware/server-islands/adapter, and the build-time image pipeline (local + ephemeral CI runners). Production runtime (Cloudflare Pages static assets + Pages Functions) is unaffected. **Known deviation — remediation requires a dedicated Astro 4→7 migration task; not resolvable inside a verification task.**
+
+## Security Headers & CSP (Task #018 gate fix, 2026-09-30)
+
+`scripts/generate-headers.mjs` runs after every `astro build` and writes `dist/_headers` (Cloudflare Pages header rules): HSTS, X-Frame-Options: DENY, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and a strict Content-Security-Policy with **sha256 hashes for every inline script/style** — no `unsafe-inline`/`unsafe-eval` anywhere. Google Fonts origins (global.css `@import`) and the Web Analytics beacon origin are allowlisted (knowledge §6/§8). Unit-tested (`scripts/generate-headers.test.ts`); verified live against `wrangler pages dev dist` with headless Chromium across 6 pages: **0 CSP violations, 0 page errors**.

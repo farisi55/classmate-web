@@ -1,8 +1,8 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
-version: 1.0.4
+version: 1.0.5
 source: prd
-last_updated: 2026-09-07
+last_updated: 2026-09-30
 project_shape: fullstack
 simple_mode: false
 external_assets: true
@@ -58,6 +58,7 @@ external_assets: true
   vitest.config.ts   # unit test runner config (Vitest, Phase 1)
   astro.config.mjs    # output: 'static'
   .github/workflows/backup-ticker.yml
+  scripts/             # generate-headers.mjs — post-build: tulis dist/_headers (5 security header + CSP sha256) + test unitnya (Task #018)
   ```
 - Layer responsibilities: `src/data/*.ts` = sumber konten statis (repository); `lib/media.ts` = satu-satunya titik resolusi gambar (data file tidak pernah import gambar langsung); `components/islands/` = satu-satunya tempat React dihidrasi client-side; `functions/api/` = satu handler per endpoint, tanpa layering tambahan
 - Design patterns: build-time asset resolver (`import.meta.glob` + `getImage()`, dipusatkan di `lib/media.ts`); scheduled-pull untuk backup (GitHub Actions men-*pull* lewat endpoint terproteksi, aplikasi tidak pernah men-*push* keluar)

@@ -6,7 +6,7 @@ import { defineConfig } from 'vitest/config';
 // scope below keeps the two test runners isolated.
 export default defineConfig({
   test: {
-    include: ['functions/**/*.test.ts', 'src/**/*.test.ts'],
+    include: ['functions/**/*.test.ts', 'src/**/*.test.ts', 'scripts/**/*.test.ts'],
     environment: 'node',
     // Keep `npm run test` green until Task #010/#011 add the first real tests.
     passWithNoTests: true,
