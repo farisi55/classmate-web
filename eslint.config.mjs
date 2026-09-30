@@ -47,9 +47,10 @@ export default [
     files: ['**/*.astro'],
     rules: {
       // Astro-specific rules
-      // Temporarily disabling this rule - the set:html in BaseLayout.astro is for
-      // injecting SVG icons which are static and safe. This will be addressed in Task #017.
-      'astro/no-set-html-directive': 'off',
+      // Re-enabled in Task #017 (XSS/output-encoding review): any new set:html
+      // must be justified; the single reviewed usage in BaseLayout.astro carries
+      // a scoped eslint-disable with its safety rationale.
+      'astro/no-set-html-directive': 'error',
     },
   },
 

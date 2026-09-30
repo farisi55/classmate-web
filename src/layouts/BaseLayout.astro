@@ -1,4 +1,8 @@
 ---
+/* eslint-disable astro/no-set-html-directive -- reviewed in Task #017 (XSS audit): the single
+   set:html in this file serializes compile-time literal JSON-LD (never user/KV input) with `<`
+   escaped to \u003c, so no tag/script breakout is possible; re-audit if the payload ever
+   becomes dynamic. */
 import '../styles/global.css';
 import type { Locale } from '../lib/types';
 import Header from '../components/Header.astro';
@@ -43,14 +47,17 @@ const cfBeaconToken: string | undefined = import.meta.env.PUBLIC_CF_BEACON_TOKEN
     <meta property="og:image" content={new URL('/img/logo/classmate-logo-fullcolor.png', Astro.site)} />
     <meta name="twitter:card" content="summary_large_image" />
 
-    <script type="application/ld+json" set:html={JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'LocalBusiness',
-      name: 'Classmate',
-      description: 'Art & craft party organizer — Bogor, Jabodetabek',
-      areaServed: 'Jabodetabek',
-      telephone: '+62899-240-0880',
-    })} />
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'LocalBusiness',
+        name: 'Classmate',
+        description: 'Art & craft party organizer — Bogor, Jabodetabek',
+        areaServed: 'Jabodetabek',
+        telephone: '+62899-240-0880',
+      }).replace(/</g, '\\u003c')}
+    />
 
     {cfBeaconToken ? (
       <script
