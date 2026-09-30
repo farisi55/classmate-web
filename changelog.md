@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
 knowledge_version: 1.0.5
-changelog_version: 1.0.18
+changelog_version: 1.0.19
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -462,24 +462,36 @@ simple_mode: false
 - **Notes:** Artifact CRLF `eslint.config.mjs` (working copy CRLF → LF via Prettier, nol diff konten — preseden #017); celah coverage tersisa `functions/api/ticker.ts` (62%/33%) tercatat sebagai technical debt eksplisit di `docs/audit-baseline.md` sesuai AC; forward impact: `dist/_headers` ikut ter-regenerate di CI/deploy via `npm run build`, tak perlu langkah tambahan.
 - **Knowledge drift:** UPDATE REQUIRED: `@knowledge` §3 — folder `scripts/` tidak tercantum dalam struktur folder → **resolved in-task**: baris `scripts/` ditambahkan, knowledge version 1.0.4 → 1.0.5, `knowledge_version` di changelog di-sync
 
-## [IN PROGRESS]
-
-### Phase 6 — Testing & QA
-
-#### Task #019 — Write Playwright E2E Core Flows
+### Task #019 — Write Playwright E2E Core Flows ✅
+- **Completed:** 2026-09-30
 - **Phase:** Phase 6 — Testing & QA
-- **Scope:** Tuntaskan suite E2E untuk 3 alur inti yang disebut `knowledge.md` §4: filter aktivitas, klik tombol WA, ganti bahasa (ID↔EN).
-- **Files to create / modify:** `e2e/activity-filter.spec.ts`, `e2e/wa-click.spec.ts`, `e2e/language-switch.spec.ts` (baru)
-- **Acceptance criteria:**
-  - [ ] `activity-filter.spec.ts`: memfilter Activity Explorer menampilkan hasil yang sesuai kata kunci, modal galeri terbuka untuk aktivitas yang punya foto
-  - [ ] `wa-click.spec.ts`: klik tombol WA di tiap tier paket menghasilkan link `wa.me` dengan pesan pre-filled yang berbeda per paket
-  - [ ] `language-switch.spec.ts`: berpindah dari rute ID ke `/en` (dan sebaliknya) mempertahankan halaman yang sama, konten berganti bahasa
-  - [ ] Unit test written and passing for new logic
-  - [ ] Test is isolated: sets up and tears down its own state (browser context baru per test, tanpa state bersama antar test)
-- **Dependencies:** Task #005
-- **Decisions made:** (fill after execution — never leave blank)
+- **Status:** OK
+- **Branch:** feat/task-019-playwright-e2e-core-flows
+- **Files created / modified:**
+  - `e2e/activity-filter.spec.ts` — **baru**: 7 test E2E Activity Explorer — jumlah kartu per tab (38/10/28), marker Min. peserta: 20 di kelas-lainnya (knowledge §7), switching antar-tab tanpa state basi, modal galeri untuk slug berfoto (2 gambar), Escape + tombol Tutup mengembalikan fokus ke trigger (verifikasi perilaku #016), placeholder "Foto dokumentasi menyusul" untuk slug tanpa foto
+  - `e2e/wa-click.spec.ts` — **baru**: 4 test E2E CTA WhatsApp — 4 CTA "Tanya Paket Ini" dengan pesan pre-filled yang unik per tier, pesan tiap kartu menyebut paketnya sendiri (tidak ada wiring tertukar), CTA header + FAB mengarah ke nomor bisnis bersama, semua link wa.me ber-`target=_blank` + `rel=noopener`
+  - `e2e/language-switch.spec.ts` — **baru**: 9 test E2E ganti bahasa — loop 7 rute (URL dipertahankan, `html lang` + h1 berganti ID↔EN), rute EN langsung berpindah balik, nav EN tetap di bawah `/en`, title dokumen mengikuti locale
+  - `src/assets/activities/activity-slime-experience-{1,2}.png` — fixture 1x1 px mengikuti slug asli "Slime Experience" (preseden #011), supaya jalur galeri-berfoto di modal bisa dieksekusi E2E; di-timpa foto asli nanti tanpa ubah test
+  - `asset-manifest.md` — bagian fixture test ditambahkan (menjelaskan status fixture #011/#019 dan cara penggantian foto asli)
+- **Acceptance criteria met:**
+  - [x] `activity-filter.spec.ts`: filter menampilkan hasil sesuai tab (38/10/28 kartu), modal galeri terbuka untuk aktivitas yang punya foto — verified: klik kartu "Slime Experience" membuka dialog dengan 2 gambar fixture
+  - [x] `wa-click.spec.ts`: klik/tautan WA tiap tier paket menghasilkan link `wa.me` dengan pesan pre-filled berbeda per paket — verified: 4 href berbeda, masing-masing menyebut paketnya sendiri (Activity Only / 25 / 50 / 100 Peserta)
+  - [x] `language-switch.spec.ts`: pindah rute ID ke `/en` (dan sebaliknya) mempertahankan halaman yang sama, konten berganti bahasa — verified di 7 rute + title dokumen
+  - [x] Unit test written and passing for new logic — n/a sebelumnya, kini terpenuhi bentuk lain: 20 test E2E baru ditulis dan lulus (unit Vitest tidak relevan untuk asersi DOM/browser; 67 unit test existing tetap hijau)
+  - [x] Test is isolated: browser context baru per test (default Playwright), tanpa state bersama antar test — `fullyParallel` 6 worker, lulus stabil 2 run beruntun
+- **Security gate:** STANDARD — all checks passed [tanpa HIGH-RISK override — tidak menyentuh auth/payment/upload/webhook/LLM; item FULL Phase-6 dievaluasi eksplisit preseden #018: 1 deviation carried (CVE pre-existing tree Astro 4.x, tanpa perubahan dependency task ini), sisanya n.a. dengan justifikasi]
+- **Scalability gate:** STANDARD — all checks passed [item FULL n.a. dengan justifikasi; load baseline tetap dijadwalkan Task #024 sesuai deferral terdokumentasi #018]
+- **Regression:** Passed 67 unit · 22 E2E (20 baru + smoke #005 + …) · lint 0 error · build 15 halaman + `_headers` OK
+- **Decisions made:**
+  - [TEST] Tunggu hidrasi eksplisit `astro-island[ssr]` sebelum klik tab/kartu — klik sebelum hidrasi hanya memindahkan fokus DOM (handler React belum terpasang), menyebabkan race yang flaky; kontrak "absennya `[ssr]` = handler siap" diverifikasi dari sumber runtime Astro (removeAttribute setelah hydrate)
+  - [TEST] Modal galeri dites lewat slug nyata `slime-experience` (fixture baru mengikuti konvensi nama) alih-alih `art-party` — fixture #011 sengaja tidak cocok slug manapun supaya `media.test.ts` bisa menguji no-match; menyalin fixture itu apa adanya akan mengklaim foto untuk produk yang tidak ada ("Art Party" bukan nama aktivitas di `activities.ts`)
+  - [TEST] Asersi wa.click di-scope per peran/struktur ("Tanya Paket Ini", header vs FAB) bukan hitung global `a[href*=wa.me]` — halaman punya 7 link WA yang sah (4 kartu + header desktop/mobile + FAB); scoping membuat test robust terhadap penambahan CTA sah di masa depan
+  - [TEST] H1 identity map memakai salinan h1 aktual per rute (mis. "Ngobrol Dulu", "Klien & Venue Partner") — beberapa h1 tidak berubah teks antar bahasa (mis. tagline Tentang), jadi aserti memakai konten yang benar-benar berubah + `html lang`
+  - [DATA] Fixture file juga didaftarkan di asset-manifest.md agar operator konten tidak mengira itu foto dokumentasi asli — melengkapi entri #011 yang hanya lewat komentar kode
+- **Notes:** 1 iterasi perbaikan (attempt 1 dari maks 2) setelah run pertama 11/22 — akar masalah: race hidrasi island, selector global vs CTA tambahan halaman, dan asumsi keliru bahwa fixture #011 cocok slug nyata. Peringatan `format:check` pada 4 file tracked adalah artifact CRLF `core.autocrlf` Windows (blob LF di HEAD, `git diff HEAD` kosong — preseden terdokumentasi #004/#017/#018), tidak ter-commit sebagai perubahan.
+- **Knowledge drift:** none
 
-## [NEXT TASKS]
+## [IN PROGRESS]
 
 ### Phase 6 — Testing & QA
 
@@ -493,7 +505,11 @@ simple_mode: false
 - **Dependencies:** Task #005, Task #006
 - **Decisions made:** (fill after execution — never leave blank)
 
+## [NEXT TASKS]
+
 ### Phase 7 — Deployment (Server variant)
+
+> (Task #020 — Bilingual Route Parity — dipromosikan ke [IN PROGRESS] saat Task #019 selesai; sub-header "Phase 6 — Testing & QA" dihapus dari seksi ini karena Phase 6 kini kosong dari task tersisa.)
 
 > SIGTERM graceful-drain (kriteria standar template untuk server tradisional) **tidak berlaku** untuk shape ini — Cloudflare Pages Functions berjalan di isolate model Workers, tanpa proses persisten yang menerima SIGTERM; siklus hidup request ditangani penuh oleh platform. Kriteria itu sengaja tidak dijadikan task.
 
