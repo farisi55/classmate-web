@@ -54,4 +54,12 @@ Per `knowledge.md` §9 — Sensitive / High-Blast-Radius Code:
 
 ---
 
-**Conclusion:** Environment audit complete. No hardcoded secrets detected. `.gitignore` updated to protect sensitive files. KV binding confirmed operational. Project proceeds to subsequent tasks with security baseline established.
+## XSS / Output Encoding Audit (Task #017, 2026-09-30)
+
+Grep over `src/`, `functions/` for `set:html`, `dangerouslySetInnerHTML`, `innerHTML`, `insertAdjacentHTML`, `document.write`, `eval(`, `new Function`:
+
+- **`set:html`: 1 match** — `src/layouts/BaseLayout.astro` JSON-LD `<script type="application/ld+json">`. Safe: payload is compile-time literal `LocalBusiness` data (never user/KV input), and `JSON.stringify(...).replace(/</g, '\\u003c')` now escapes `<` so no `</script>` breakout is possible even if a literal later contains markup characters. Scoped `eslint-disable` in the file's frontmatter documents the rationale; `astro/no-set-html-directive` is re-enabled as `error` (was temporarily `off` since Task #003) so any *new* `set:html` fails lint.
+- **`dangerouslySetInnerHTML` / `innerHTML` / `insertAdjacentHTML` / `document.write` / `eval` / `new Function`: 0 matches.**
+- **Ticker rendering (admin-written KV data)** — the AC's risk case: server-rendered default passes through Astro `{expr}` (auto-escaped); client rotation sets `textEl.textContent = …` (text node, not HTML); admin form uses React controlled inputs (React-escaped). No raw HTML injection path.
+
+**Conclusion:** Environment audit complete. No hardcoded secrets detected. `.gitignore` updated to protect sensitive files. KV binding confirmed operational. XSS audit: one documented-safe `set:html`, zero unsafe sinks. Project proceeds to subsequent tasks with security baseline established.

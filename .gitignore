@@ -5,8 +5,6 @@ coverage/
 test-results/
 .claude/
 .wrangler/
-.github/
-.husky/
 .kilo/
 
 # dependencies
