@@ -50,6 +50,14 @@ activity-pottery-sand-art-1.webp      | webp | 1600x1200 | /src/assets/activitie
 ```
 (35 aktivitas sisanya mengikuti pola yang sama.)
 
+> **Fixture test (Task #011 & #019):** file di folder ini yang BUKAN foto asli —
+> `activity-art-party-{1,2,3}.png` dan `activity-slime-experience-{1,2}.png` — adalah
+> placeholder 1x1 px murni untuk unit test `media.test.ts` dan E2E `activity-filter.spec.ts`.
+> `art-party` tidak cocok dengan slug aktivitas manapun di `activities.ts` (sengaja, supaya
+> test glob tidak menggangu kartu asli); `slime-experience` JUGA slug asli — saat foto
+> dokumentasi asli ditambahkan, timpa kedua fixture ini dengan foto webp sesuai konvensi;
+> E2E modal-galeri otomatis lulus dengan foto asli tanpa perubahan test.
+
 ### Logo Klien & Venue (29 total — lihat src/data/testimonials-clients.ts)
 Tiap entri saat ini tampil sebagai wordmark teks (belum ada file logo). Kirim logo asli
 dalam **PNG transparan** (bukan SVG — lihat catatan di `src/lib/media.ts`) untuk
