@@ -11,7 +11,7 @@ export default {
       current: 'currentColor',
       white: '#FFFFFF',
       black: '#000000',
-      folly: { DEFAULT: '#FF0659', dark: '#D6004A' },
+      folly: { DEFAULT: '#D6004A', dark: '#B8003F' },
       byzantine: '#BC22B8',
       yellow: '#F7E500',
       pumpkin: '#FF7110',

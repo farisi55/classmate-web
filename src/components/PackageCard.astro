@@ -33,7 +33,7 @@ const { lang, pkg } = Astro.props;
   <ul class="space-y-2 mb-4 flex-1">
     {pkg.includes.map((item) => (
       <li class="flex items-start gap-2 text-sm">
-        <svg class="mt-0.5 shrink-0 text-kiwi" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="mt-0.5 shrink-0 text-kiwi" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
         <span>{t(item, lang)}</span>

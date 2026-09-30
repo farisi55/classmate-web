@@ -4,6 +4,8 @@ dist/
 coverage/
 test-results/
 .claude/
+.wrangler/
+.kilo/
 
 # dependencies
 node_modules/
@@ -22,7 +24,4 @@ secrets/
 .vscode/*
 !.vscode/extensions.json
 
-# wrangler
-.wrangler/
-.github/
-.husky/
+

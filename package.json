@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro check && astro build",
+    "build": "astro check && astro build && node scripts/generate-headers.mjs",
     "deploy": "npx wrangler pages deploy dist",
     "preview": "astro preview",
     "astro": "astro",
@@ -16,6 +16,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "check:routes": "node scripts/check-route-parity.mjs",
     "prepare": "husky"
   },
   "dependencies": {

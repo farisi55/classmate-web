@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import type { Activity, Locale } from '../../lib/types';
 
 interface Props {
@@ -17,9 +17,45 @@ interface Props {
 
 type Filter = 'semua' | 'inti' | 'kelas-lainnya';
 
+/** Trap focus within a container element — cycles Tab/Shift+Tab through
+ *  focusable children. Returns a cleanup ref for the keydown listener. */
+function useFocusTrap(containerRef: React.RefObject<HTMLElement | null>, active: boolean) {
+  useEffect(() => {
+    if (!active || !containerRef.current) return;
+    const container = containerRef.current;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Tab') return;
+      const focusable = container.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    container.addEventListener('keydown', handleKeyDown);
+    return () => container.removeEventListener('keydown', handleKeyDown);
+  }, [active, containerRef]);
+}
+
 export default function ActivityExplorer({ activities, lang, strings }: Props) {
   const [filter, setFilter] = useState<Filter>('semua');
   const [active, setActive] = useState<Activity | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
 
   const filtered = useMemo(
     () => (filter === 'semua' ? activities : activities.filter((a) => a.category === filter)),
@@ -32,6 +68,37 @@ export default function ActivityExplorer({ activities, lang, strings }: Props) {
     { key: 'kelas-lainnya', label: strings.kelasLainnya },
   ];
 
+  const openModal = useCallback((activity: Activity, trigger: HTMLButtonElement) => {
+    triggerRef.current = trigger;
+    setActive(activity);
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setActive(null);
+    triggerRef.current?.focus();
+  }, []);
+
+  // Focus trap inside dialog
+  useFocusTrap(dialogRef, active !== null);
+
+  // Move focus into dialog when it opens
+  useEffect(() => {
+    if (active && dialogRef.current) {
+      const closeBtn = dialogRef.current.querySelector<HTMLButtonElement>('button[aria-label]');
+      closeBtn?.focus();
+    }
+  }, [active]);
+
+  // Escape key closes dialog
+  useEffect(() => {
+    if (!active) return;
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === 'Escape') closeModal();
+    }
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [active, closeModal]);
+
   return (
     <div>
       <div className="flex flex-wrap gap-2 mb-8" role="tablist" aria-label="Filter aktivitas">
@@ -39,7 +106,9 @@ export default function ActivityExplorer({ activities, lang, strings }: Props) {
           <button
             key={tab.key}
             role="tab"
+            id={`tab-${tab.key}`}
             aria-selected={filter === tab.key}
+            aria-controls="activity-panel"
             onClick={() => setFilter(tab.key)}
             className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
               filter === tab.key
@@ -52,11 +121,16 @@ export default function ActivityExplorer({ activities, lang, strings }: Props) {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        id="activity-panel"
+        role="tabpanel"
+        aria-labelledby={`tab-${filter}`}
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+      >
         {filtered.map((activity) => (
           <button
             key={activity.slug}
-            onClick={() => setActive(activity)}
+            onClick={(e) => openModal(activity, e.currentTarget)}
             className="card text-left p-5 hover:shadow-lift transition-shadow focus-visible:outline focus-visible:outline-3 focus-visible:outline-folly"
           >
             <span className="eyebrow">
@@ -83,11 +157,14 @@ export default function ActivityExplorer({ activities, lang, strings }: Props) {
           role="dialog"
           aria-modal="true"
           aria-labelledby="activity-modal-title"
-          onClick={(e) => e.target === e.currentTarget && setActive(null)}
+          onClick={(e) => e.target === e.currentTarget && closeModal()}
         >
-          <div className="bg-white rounded-t-md sm:rounded-md max-w-lg w-full max-h-[85vh] overflow-y-auto p-6 relative">
+          <div
+            ref={dialogRef}
+            className="bg-white rounded-t-md sm:rounded-md max-w-lg w-full max-h-[85vh] overflow-y-auto p-6 relative"
+          >
             <button
-              onClick={() => setActive(null)}
+              onClick={closeModal}
               className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full border-2 border-ink/10 hover:border-folly"
               aria-label={strings.tutup}
             >
@@ -108,7 +185,9 @@ export default function ActivityExplorer({ activities, lang, strings }: Props) {
               <ul className="space-y-1 mb-4">
                 {active.includes.map((item, i) => (
                   <li key={i} className="text-sm flex items-start gap-2">
-                    <span className="text-kiwi mt-0.5">✓</span>
+                    <span className="text-kiwi mt-0.5" aria-hidden="true">
+                      ✓
+                    </span>
                     <span>{lang === 'id' ? item.id : item.en}</span>
                   </li>
                 ))}

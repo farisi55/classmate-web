@@ -1,0 +1,11 @@
+# Block committing secret files (.env, keys, certs, secrets/)
+staged_secrets=$(git diff --cached --name-only | grep -E '(^|/)\.env(\.|$)|\.pem$|\.key$|\.p12$|(^|/)secrets/' || true)
+if [ -n "$staged_secrets" ]; then
+  echo "❌ Pre-commit blocked: secret file(s) staged for commit:"
+  echo "$staged_secrets"
+  echo "Remove them from the index (git rm --cached <file>) before committing."
+  exit 1
+fi
+
+# Format + lint staged files
+npx lint-staged
