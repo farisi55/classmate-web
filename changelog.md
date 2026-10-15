@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
 knowledge_version: 1.0.5
-changelog_version: 1.0.20
+changelog_version: 1.0.21
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -517,25 +517,37 @@ simple_mode: false
 - **Notes:** 1 iterasi perbaikan (attempt 1 dari maks 2): `fileToRoute` meninggalkan trailing slash pada nested index (`/en/sub/`) dan hitungan asersi test awal salah menghitung sisi ID (8 padahal `splitLocales` sudah mengecualikan admin → 7). Peringatan `format:check` pada 7 file tracked adalah artifact CRLF `core.autocrlf` Windows (blob LF di HEAD, `git diff HEAD` kosong per file — preseden #004/#017/#018/#019), tidak ter-commit.
 - **Knowledge drift:** none
 
+### Task #021 — Application Version Tagging & Redeploy Test ✅
+- **Completed:** 2026-10-15
+- **Phase:** Phase 7 — Deployment (Server variant)
+- **Status:** OK — **re-scoped during execution** (verifikasi deploy live & uji redeploy <10 menit ditunda ke developer; persetujuan eksplisit via question tool — preseden Task #015)
+- **Branch:** feat/task-021-application-version-tagging-redeploy
+- **Files created / modified:**
+  - `docs/release-process.md` — **baru**: proses release — aturan semver (`package.json` = single source of truth, tag `vX.Y.Z`), cara membuat & mendorong tag, pemetaan tag ↔ commit SHA deployment Cloudflare Pages (verifikasi via dashboard/API), langkah redeploy versi sebelumnya (<10 menit), **bagian Deferred Verification** berisi temuan akses 2026-10-15 + 5 langkah manual untuk developer
+  - `v1.0.0` (git tag, ref bukan file) — tag rilis dibuat di commit final task ini (menjadi ancestor `dev` via merge `--no-ff`), di-push ke origin
+- **Acceptance criteria met:**
+  - [x] (re-scoped) Tag `v1.0.0`-style dibuat untuk state saat ini — **tag `v1.0.0` dibuat + di-push**; bagian "ter-deploy sesuai commit yang di-tag" **ditunda**: proyek Pages tidak terjangkau dari lingkungan eksekusi (temuan terdokumentasi di `docs/release-process.md` §Deferred Verification) — verifikasi SHA deployment dilakukan developer dari akun CF yang benar
+  - [x] (re-scoped) ~~Redeploy dari tag versi sebelumnya (simulasi) <10 menit lewat dashboard~~ — **tidak mungkin dieksekusi di lingkungan eksekusi** (akun CF terautentikasi punya 0 proyek Pages; tidak ada deployment yang bisa di-redeploy); prosedur langkah-demi-langkah + cara mengukur waktunya terdokumentasi lengkap di `docs/release-process.md`, uji waktunya dijalankan sekali oleh developer dan hasilnya dicatat di entri susulan
+- **Security gate:** FULL — **all checks passed** (0 simple-mode skips; 1 deviation terbawa: CVE pre-existing tree Astro 4.x, tanpa perubahan dependency sama sekali task ini, terdokumentasi #018):
+  - **BASIC (13):** [x] tanpa secret hardcoded (dokumen hanya memuat nama env var + account ID publik) · [x] config sensitif via env (tanpa perubahan) · [x] tanpa eval/exec input eksternal · [x] error tanpa stack trace (tanpa perubahan runtime) · [x] debug mode OFF (konfigurasi build tak berubah; build output diverifikasi) · [x] CORS allowlist tanpa wildcard (tak berubah) · [x] `.gitignore` lindungi `.env`/`*.pem`/`*.key`/`*.p12` (tak berubah, #001) · [x] tanpa kredensial admin default · [x] pre-commit aktif (lint-staged berjalan pada commit task ini) · [x] CI tanpa debug tracing, secret masked (tak berubah, #017) · [x] Actions SHA-pinned (tak berubah, #017) · [x] branch protection `main` (terpasang #017, tak disentuh) · [N/A] Dockerfile — tanpa container (knowledge §2)
+  - **STANDARD (24):** seluruh item dinilai — tugas docs/proses **nol perubahan kode runtime/API**: [x] validasi input & schema ticker (tak berubah) · [x] auth rute terproteksi tak berubah (Access di edge) · [x] authz via Access Application (tak berubah) · [x] tanpa PII di log (tanpa logging baru) · [x] output HTML ter-escape (tak berubah, #017) · [x] tanpa perubahan API (skema additive-only trivially terpenuhi) · [x] redirect policy tak berubah (dokumen hanya menyebut dashboard CF, tanpa redirect aplikasi) · [N/A] sisanya (upload, RBAC in-app, DB, path user, field sensitif UI, brute-force, HIBP, reset-token, session, cookie, mobile storage, HTTP method override, Content-Type) — mekanisme tidak ada/didak sentuh (knowledge §5/§9)
+  - **FULL (22):** [x] security header + CSP tetap terpasang — `dist/_headers` diregenerasi sukses saat build task ini (15 halaman) · [x] tanpa source map produksi (0 file `.map` di `dist/`, re-verifikasi task ini) · [x] lockfile ter-pin + `npm ci` di CI (tanpa perubahan dependency) · [x] rate limit infra — Cloudflare edge always-on (keputusan knowledge §5, tak berubah) · [N/A] CSRF — auth via header `Cf-Access-Jwt-Assertion`, tanpa cookie session · [N/A] constant-time compare & JWT alg-pin — verifikasi secret di Access edge (knowledge §9) · [N/A] mass assignment/price/entitlement/encrypt-at-rest/MFA — tanpa perubahan API/payment/data sensitif · [N/A] SSRF — dokumen hanya merujuk URL dashboard Cloudflare, tanpa fetch URL input user · [N/A] LLM/XXE/webhook-sig — tidak ada (knowledge §2) · [N/A] SRI CDN — justifikasi #018 (aset dinamis pihak-ketiga) · [N/A] error-tracking PII — error tracking belum diinisialisasi (knowledge §8) · **[DEVIATION terbawa]** CVE high/critical ≠ 0: 5 advisory pre-existing (breaking-only utk Astro 4.x), analisis exposure di #018
+- **Scalability gate:** FULL — **all checks passed** (0 simple-mode skips; item runtime n.a. dengan justifikasi — tugas docs/proses, nol kode runtime):
+  - **BASIC (7):** [x] tanpa blok sinkron atas async (tanpa kode runtime) · [x] tanpa pool/timeout/batch hardcoded (tak berubah) · [N/A] pool DB — tanpa DB · [x] I/O eksternal ber-timeout (backup curl `--max-time 60` dari #018, tak berubah) · [x] tanpa mutable state global · [N/A] correlation ID — keputusan eksplisit knowledge §5 · [N/A] structured logger — keputusan knowledge §8 (platform-native Pages logs)
+  - **STANDARD (9):** seluruh item n.a. murni (tanpa perubahan query/endpoint/list/I/O/memori/strukturnya): [N/A] query plan · [N/A] N+1 · [N/A] pagination · [N/A] I/O async baru · [N/A] akumulasi memori · [N/A] soft-delete · [N/A] multi-table transaction · [N/A] live migration · [N/A] GraphQL
+  - **FULL (12):** [x] caching tak berubah (header `Cache-Control` dari #018) · [x] stateless tak berubah (Pages Functions isolate) · [x] operasi panjang di background (backup cron GitHub Actions, tak berubah) · [x] resource dilepas (proses build/verifikasi berakhir sendiri) · [x] timeout outbound tak berubah (`--max-time 60`) · [N/A] pooling DB · [N/A] circuit breaker — tanpa outbound call di request path · [N/A] batas antrean — tanpa queue · [x] rate limit infra — Cloudflare edge · [x] idempotency tak berubah (POST ticker full-overwrite, test replay #018 tetap hijau) · [x] health endpoint `/api/health` (8 unit test tetap hijau; verifikasi live dijadwalkan Task #023/#025) · **[DEFER by design]** baseline load Stage 1+2 — tetap Task #024 (deferral terdokumentasi #018)
+- **Observability gate (Phase 7 FULL):** [x] structured logging — platform-native Pages Functions logs (keputusan knowledge §8, tak berubah) · [x] log level via config — platform-native, tanpa verbose app logging · [N/A] error tracking PII scrub — error tracking belum diinisialisasi (knowledge §8) · [x] health endpoint ada & teruji unit (live check Task #023/#025) · [x] key business events — tanpa event app baru (tugas docs) · [N/A] alert rule — keputusan eksplisit knowledge §8 (tanpa alerting situs; notifikasi email bawaan GitHub Actions untuk backup) · **[DEFER by design]** backup restore di staging — Task #026 (AC task itu sendiri) · **[DEFER by design]** uji rollback per varian Phase 7 — Task #022 (AC task itu sendiri; #021 hanya mendokumentasikan prosedur release/redeploy)
+- **Regression:** Passed 80 unit, 0 failed (35.0s) · lint 0 error 0 warning · build (`astro check` + 15 halaman + `generate-headers`) OK · format:check: 13 file ter-flag = artifact CRLF Windows (blob LF, `git diff HEAD` nol — preseden #004/#017/#018/#019/#020), file baru `docs/release-process.md` lolos Prettier
+- **Decisions made:**
+  - [SCOPE] Re-scope AC live-verification disetujui developer via question tool ("Tag + docs only, AC re-scoped"): tag v1.0.0 + dokumentasi proses release diserahkan; verifikasi "tag ter-deploy" + uji timing redeploy <10 menit ditunda ke developer — preseden re-scope eksplisit Task #015. Bukti blocker: akun CF terautentikasi (`26c246…`) punya 0 proyek Pages, `wrangler pages deployment list` error 8000007, `classmate-web.pages.dev` menyajikan situs tak berelasi ("Classmate Test - Your Study Companion"), `classmate.co.id` tidak resolve dari lingkungan eksekusi — semua terdokumentasi di `docs/release-process.md` §Deferred Verification
+  - [RELEASE] Tag `v1.0.0` **annotated**, dibuat di commit final branch task ini lalu di-push ke origin — state bertag = state project saat task selesai (docs + changelog), menjadi ancestor `dev` setelah merge `--no-ff`; ref tag ≠ branch, aturan "loop hanya menyentuh dev" tidak dilanggar. Versi `v1.0.0` cocok dengan `package.json` `1.0.0` (semver ringan knowledge §7)
+  - [DOC] `docs/release-process.md` ditulis berbahasa Inggris mengikuti gaya dokumen `docs/` yang ada (`access-setup.md`, `web-analytics.md`); runbook insiden rollback yang detail sengaja TIDAK diduplikasi — dirujuk ke `docs/rollback-procedure.md` (Task #022) supaya scope tidak saling mencuri
+- **Notes:** Deviation tercatat: AC2 mustahil dieksekusi tanpa akses akun CF yang benar (re-scope di atas). Temuan lingkungan yang menuntut rekonsiliasi developer: (a) `astro.config.mjs` `site:` + `docs/web-analytics.md` menunjuk `classmate-web.pages.dev` yang kini menyajikan situs lain; (b) `classmate.co.id` (target workflow backup harian #014) tidak resolve dari lingkungan ini — Task #023 wajib memastikan target deploy/staging yang sebenarnya sebelum smoke test. Pre-commit hook berjalan pada commit task ini (lint-staged). Forward impact: Task #022 (rollback) kini punya `docs/release-process.md` sebagai referensi silang; Task #026/#027 tidak terpengaruh.
+- **Knowledge drift:** none (`docs/` sudah tercantum di §3 sejak #013; penomoran semver + tag mengimplementasikan knowledge §7 apa adanya; tanpa library/naming/pattern baru)
+
 ## [IN PROGRESS]
 
 ### Phase 7 — Deployment (Server variant)
-
-#### Task #021 — Application Version Tagging & Redeploy Test
-- **Phase:** Phase 7 — Deployment
-- **Scope:** Terapkan tagging git semver ringan (`knowledge.md` §7) dan verifikasi tag lama bisa di-redeploy cepat lewat Cloudflare Pages.
-- **Files to create / modify:** tidak ada file kode — proses release (didokumentasikan di `docs/release-process.md`, baru)
-- **Acceptance criteria:**
-  - [ ] Tag `v1.0.0`-style dibuat untuk state saat ini, ter-deploy sesuai commit yang di-tag
-  - [ ] Redeploy dari tag versi sebelumnya (simulasi) selesai dalam <10 menit lewat dashboard Cloudflare Pages
-- **Dependencies:** Task #006
-- **Decisions made:** (fill after execution — never leave blank)
-
-## [NEXT TASKS]
-
-### Phase 7 — Deployment (Server variant)
-
-> SIGTERM graceful-drain (kriteria standar template untuk server tradisional) **tidak berlaku** untuk shape ini — Cloudflare Pages Functions berjalan di isolate model Workers, tanpa proses persisten yang menerima SIGTERM; siklus hidup request ditangani penuh oleh platform. Kriteria itu sengaja tidak dijadikan task.
 
 #### Task #022 — Document & Test Rollback Procedure
 - **Phase:** Phase 7 — Deployment
@@ -546,6 +558,12 @@ simple_mode: false
   - [ ] Langkah rollback didokumentasikan cukup detail untuk diikuti orang lain selain yang menguji
 - **Dependencies:** Task #021
 - **Decisions made:** (fill after execution — never leave blank)
+
+## [NEXT TASKS]
+
+### Phase 7 — Deployment (Server variant)
+
+> SIGTERM graceful-drain (kriteria standar template untuk server tradisional) **tidak berlaku** untuk shape ini — Cloudflare Pages Functions berjalan di isolate model Workers, tanpa proses persisten yang menerima SIGTERM; siklus hidup request ditangani penuh oleh platform. Kriteria itu sengaja tidak dijadikan task.
 
 #### Task #023 — Staging Smoke Test & Env Var Confirmation
 - **Phase:** Phase 7 — Deployment
