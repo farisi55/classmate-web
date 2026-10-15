@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
-knowledge_version: 1.0.5
-changelog_version: 1.0.22
+knowledge_version: 1.0.6
+changelog_version: 1.0.23
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -572,25 +572,40 @@ simple_mode: false
 - **Notes:** Deviation tercatat: AC1 mustahil dieksekusi tanpa akses akun CF yang benar (re-scope di atas); temuan lingkungan #021 (akun CF mismatch, `classmate-web.pages.dev` menyajikan situs lain, `classmate.co.id` tak resolve) dibawa masuk sebagai peringatan prasyarat di runbook — Task #023 tetap wajib memastikan target deploy/staging yang sebenarnya. Pre-commit hook berjalan pada commit task ini. Forward impact: Task #024 (load test) & #025 (health staging) kini punya runbook referensi; `docs/backup-restore-runbook.md` (#026) dirujuk dari tabel "gunakan rollback untuk X, bukan untuk Y".
 - **Knowledge drift:** none (`docs/` ∈ §3 sejak #013; runbook operasional tidak mengubah library/naming/pattern/API/infra yang terdokum di knowledge; rollback 1-klik + RTO <1 jam sudah sesuai knowledge §8 apa adanya)
 
+### Task #023 — Staging Smoke Test & Env Var Confirmation ✅
+- **Completed:** 2026-10-15
+- **Phase:** Phase 7 — Deployment (Server variant)
+- **Status:** OK — **staging environment dibuat di lingkungan yang sama** (persetujuan eksplisit developer via question tool; deviasi tercatat: proyek Pages produksi tetap tidak terjangkau — lihat Notes)
+- **Branch:** feat/task-023-staging-smoke-test-env-var-confirmation
+- **Files created / modified:**
+  - `changelog.md` — entri ini (scope task: **tidak ada file kode**, sesuai definisi task)
+  - `knowledge.md` — drift resolution in-task: §8 Multi-environment + versi 1.0.5 → 1.0.6 (lihat Knowledge drift)
+  - **Sumber daya cloud (bukan file repo):** proyek Pages `classmate-web-staging` dibuat; 2 deployment (preview-branch lalu production-stage `--branch main --commit-hash <git SHA>`); binding `CLASSMATE_KV` (`87b5fe2b…`) disinkronkan wrangler saat deploy; 39 file statis + `dist/_headers` + Functions bundle ter-upload
+- **Acceptance criteria met:**
+  - [x] Ketujuh halaman × 2 bahasa termuat tanpa error 500 di preview deployment — **14/14 rute → 200 + `<h1>` ada + `html lang` benar** (`id` untuk 7 rute ID, `en` untuk 7 rute EN) di `https://classmate-web-staging.pages.dev` (alias production-stage dari deployment `6273e437…`); rute tanpa trailing-slash memang 308 → `/` (Astro, diikuti `-L`, bukan error)
+  - [x] `GET /api/health` di preview mengembalikan `kv_reachable: true` — **200 `{"status":"ok","kv_reachable":true}`** di alias root; ini membuktikan binding `CLASSMATE_KV` benar-benar ada **di environment** (diuji lewat pemanggilan fungsi live — persis maksud AC "bukan cuma di wrangler.toml"); bonus: `GET /api/ticker` → 200 `{"data":[],"error":null}` (KV terbaca; key masih kosong karena belum pernah ditulis)
+- **Security gate:** FULL — **all checks passed** (0 simple-mode skips; 1 deviation terbawa: CVE pre-existing tree Astro 4.x, tanpa perubahan dependency task ini, terdokumentasi #018):
+  - **BASIC (13):** [x] tanpa secret hardcoded — token OAuth wrangler dibaca dari config lokal ke variabel shell, **tidak pernah dicetak** ke output/log; hanya account ID (identitas publik) + namespace ID (sudah di repo) terlibat · [x] config sensitif via env · [x] tanpa eval/exec · [x] error tanpa stack trace — halaman 404 platform ("Nothing is here yet") tidak membocorkan path internal · [x] debug mode OFF — target = `astro build` produksi (build task ini, 15 halaman) · [x] CORS allowlist tanpa wildcard (fungsi tak berubah) · [x] `.gitignore` proteksi secret (tree bersih, diverifikasi `git status` kosong) · [x] tanpa kredensial admin default — **diverifikasi live di staging**: `POST /api/admin/ticker` tanpa JWT → **401** · [x] pre-commit aktif (lint-staged berjalan pada commit task ini) · [x] CI/CD tanpa debug tracing, secret masked (tak berubah) · [x] Actions SHA-pinned (tak berubah, #017) · [x] branch protection `main` (tak disentuh) · [N/A] Dockerfile — tanpa container (knowledge §2)
+  - **STANDARD (24):** [x] auth setiap rute terproteksi — **diverifikasi live**: tanpa `Cf-Access-Jwt-Assertion` → 401 (lapisan pengecekan header di fungsi tetap menegakkan meski proyek staging belum punya Access App di depannya) · [x] authz di layer layanan (Access Application tak berubah) · [x] validasi input & payload ticker tak berubah (80 unit test hijau) · [x] ReDoS — tanpa regex baru · [x] PII tak masuk log — tidak ada logging baru; keluaran smoke test berisi status/rute saja · [x] output HTML ter-escape — halaman disajikan persis build statis (#017) · [x] redirect — 308 hanyalah trailing-slash Astro ke path sesama-origin (bukan open redirect) · [x] HTTP method override tidak dipakai · [x] Content-Type sebelum body (`request.json()` fail-closed) · [x] skema API additive-only — tanpa perubahan API · [N/A] body-size/upload, RBAC/audit in-app, DB, path input user, field sensitif UI, brute-force, HIBP, reset-token, session, cookie, storage mobile — mekanisme tidak ada (knowledge §5/§9)
+  - **FULL (22):** [x] rate limit unauth per IP — proyek berada di edge Cloudflare (tanpa skip: simple_mode false) · [x] infra rate limiting — Cloudflare edge always-on · [x] CSRF — kondisi skip terpenuhi: auth via header (`Cf-Access-Jwt-Assertion`), tanpa cookie session · [x] security header **diverifikasi live di staging**: HSTS, CSP, `x-frame-options: DENY`, `x-content-type-options`, `referrer-policy`, `permissions-policy` semuanya terbawa `dist/_headers` · [x] CSP tanpa `unsafe-inline`/`unsafe-eval` (header live) · [x] lockfile + `npm ci` (tanpa perubahan dependency) · [x] source map — deployment hanya unggah `dist` (0 `.map`, diverifikasi #021; build task ini identik) · [x] rate limit endpoint terautentikasi — keputusan knowledge §5 (Access membatasi penulis; tanpa counter in-app) · [N/A] constant-time compare & JWT alg-pin — Access edge (knowledge §9) · [N/A] mass assignment/price/entitlement/encrypt-at-rest/MFA — tanpa perubahan API/data sensitif · [N/A] SSRF — semua URL pada perintah deploy/smoke berfixed (host pages.dev), tanpa fetch URL input user · [N/A] LLM/XXE/webhook-sig/SRI/error-tracking-PII — tidak ada perubahan terkait (justifikasi #018) · **[DEVIATION terbawa]** CVE high/critical ≠ 0: 5 advisory pre-existing (breaking-only untuk Astro 4.x), analisis exposure di #018
+- **Scalability gate:** FULL — **all checks passed** (0 simple-mode skips; nol kode runtime baru):
+  - **BASIC (7):** [x] tanpa blok sinkron · [x] tanpa limit/pool hardcoded baru · [N/A] pool DB — tanpa DB · [x] I/O eksternal ber-timeout eksplisit — **semua** panggilan smoke test memakai `curl --max-time 30` · [x] tanpa mutable state global · [N/A] correlation ID — knowledge §5 (tanpa request_id) · [N/A] structured logger — knowledge §8
+  - **STANDARD (9):** seluruh item n.a. murni (tugas live-test, nol perubahan query/endpoint/kode): [N/A] query plan · [N/A] N+1 · [N/A] pagination · [N/A] I/O async baru · [N/A] akumulasi memori · [N/A] soft-delete · [N/A] multi-table transaction · [N/A] live migration · [N/A] GraphQL
+  - **FULL (12):** [x] caching — aset statis dilayani edge Cloudflare default (tak berubah) · [x] stateless — Pages Functions isolate · [N/A] long ops — deploy manual = operasi sesi, di luar request path · [x] resource dilepas — proses curl/wrangler berakhir tiap perintah · [x] timeout outbound eksplisit (semua `--max-time`) · [N/A] pooling DB · [N/A] circuit breaker — tanpa outbound call aplikasi · [N/A] antrean · [x] infra rate limiting — edge Cloudflare · [x] idempotency — **deploy ulang build identik = state akhir sama** (terbukti: 2 deploy menghasilkan konten identik, URL deployment beda) · [x] health endpoint — **terverifikasi live** di staging (`kv_reachable: true`) · **[DEFER by design]** baseline load Stage 1+2 — Task #024 (deferral terdokumentasi #018; staging kini siap sebagai target)
+- **Observability gate (Phase 7 FULL):** [x] structured logging — platform-native Pages logs (knowledge §8) · [x] log level via config — platform-native, tanpa verbose app logging · [N/A] error tracking PII scrub — error tracking belum diinisialisasi (knowledge §8) · [x] health endpoint **merespons benar live** di staging (AC utama task ini) · [x] key business events — setiap deployment ter-catat dengan `--commit-hash <git SHA>` (jejak deployment → kode) · [N/A] alert rule — keputusan eksplisit knowledge §8 · **[DEFER by design]** backup restore di staging — Task #026 · **[DEFER by design]** uji rollback — AC1 Task #022 (ditunda developer)
+- **Regression:** `npm run test` → **Tests 80 passed (80), 6 files passed, 0 failed** · lint 0 error (exit 0) · build di awal task: `astro check` + 15 halaman + `generate-headers` OK · tree bersih setelah manuver deploy (`git status --porcelain` kosong, `wrangler.toml` dipulihkan byte-identical)
+- **Decisions made:**
+  - [INFRA] Staging = proyek Pages **baru `classmate-web-staging`** di akun terautentikasi, di-*direct-upload* via wrangler (persetujuan developer) — bukan preview Git-integration: proyek asli tidak terjangkau dari akun mana pun yang bisa diakses, dan nama `classmate-web.pages.dev` diduduki situs tak berelasi. Nama `classmate-web-staging` dipilih agar subdomain pages.dev unik
+  - [INFRA] Binding KV disinkronkan lewat **jalur wrangler saat deploy** (otomatis dari `wrangler.toml` ketika `pages_build_output_dir` ter-set) — dua upaya PATCH API Pages (`namespace_id`, lalu `id`) sukses HTTP tetapi tidak persist; jalur wrangler yang otoritatif, dan keberhasilannya dibuktikan oleh AC `kv_reachable: true` secara live
+  - [INFRA] Deploy pertama mewarisi nama branch git → tercatat sebagai *preview*-stage (alias root 404 "Nothing is here yet"); di-deploy ulang dengan `--branch main --commit-hash <SHA>` → production-stage → alias root melayani staging + metadata commit terpasang. Dua-duanya terdokumentasi supaya pengulang tidak bingung dengan "propagasi DNS"
+  - [INFRA] **Temuan config:** bagian `[assets]` di `wrangler.toml` (ter-commit) membuat `wrangler pages deploy` gagal validasi Pages; workaround = swap config sementara saat deploy lalu pulihkan byte-identical (terverifikasi `git diff` kosong). Kandidat perbaikan di masa depan: hapus/rekonsiliasi bagian `[assets]` — dicatat di Notes, di luar scope task "tanpa file kode"
+  - [TEST] Smoke test = loop `curl -L --max-time 30` yang meng-assert 200 + keberadaan `<h1>` + `html lang` per rute — mengikuti pola discovery 7+7 dari `scripts/check-route-parity.mjs` (satu sumber kebenaran rute, preseden #020), bukan daftar rute hardcode kedua
+- **Notes:** Deviasi tercatat: environment staging **bukan** proyek Git-integration produksi — proyek staging belum punya Cloudflare Access App di depannya, tetapi lapisan pengecekan header JWT **di dalam fungsi** tetap menegakkan 401 (diverifikasi live), jadi tulis-publik tetap tertutup; lingkungan staging bersifat preview internal (Access produksi tetap di domain produksi via Zero Trust — `docs/access-setup.md`). Temuan lingkungan #021 tetap terbuka untuk developer (akun CF mismatch proyek produksi, `classmate-web.pages.dev` disita situs lain, `classmate.co.id` tak resolve) — staging ini adalah lingkungan Phase 7 yang berfungsi penuh sampai itu beres. Kandidat tindak lanjut: pertimbangkan Access sederhana / hapus proyek staging setelah Phase 7 selesai. Forward impact: Task #024 (load test) memakai `classmate-web-staging.pages.dev` sebagai target; Task #025 (health staging) memakai endpoint yang sama.
+- **Knowledge drift:** UPDATE REQUIRED: `@knowledge` §8 — pemicu "Infra ∉ §8": lingkungan staging baru `classmate-web-staging.pages.dev` (proyek Pages manual-upload + binding `CLASSMATE_KV` sinkron wrangler) tidak tercatat di Multi-environment → **resolved in-task**: baris Multi-environment diperbarui, knowledge version 1.0.5 → 1.0.6, `knowledge_version` di changelog di-sync
+
 ## [IN PROGRESS]
 
 ### Phase 7 — Deployment (Server variant)
-
-#### Task #023 — Staging Smoke Test & Env Var Confirmation
-- **Phase:** Phase 7 — Deployment
-- **Scope:** Deploy ke preview/staging Cloudflare Pages, smoke-test halaman utama + endpoint API, konfirmasi binding `CLASSMATE_KV` benar-benar ada di environment tersebut (bukan cuma di `wrangler.toml`).
-- **Files to create / modify:** tidak ada file kode
-- **Acceptance criteria:**
-  - [ ] Ketujuh halaman × 2 bahasa termuat tanpa error 500 di preview deployment
-  - [ ] `GET /api/health` di preview mengembalikan `kv_reachable: true`
-- **Dependencies:** Task #006, Task #008
-- **Decisions made:** (fill after execution — never leave blank)
-
-## [NEXT TASKS]
-
-### Phase 7 — Deployment (Server variant)
-
-> SIGTERM graceful-drain (kriteria standar template untuk server tradisional) **tidak berlaku** untuk shape ini — Cloudflare Pages Functions berjalan di isolate model Workers, tanpa proses persisten yang menerima SIGTERM; siklus hidup request ditangani penuh oleh platform. Kriteria itu sengaja tidak dijadikan task.
 
 #### Task #024 — Two-Stage Load Test
 - **Phase:** Phase 7 — Deployment
@@ -601,6 +616,12 @@ simple_mode: false
   - [ ] Stage 2 (≥50 VU/≥2 menit) selesai dengan P95/P99 tercatat, memory di endpoint layer akhir ≤120% dari awal, nol error 5xx selama deploy pertengahan-tes (kalau deploy disimulasikan bersamaan)
 - **Dependencies:** Task #023
 - **Decisions made:** (fill after execution — never leave blank)
+
+## [NEXT TASKS]
+
+### Phase 7 — Deployment (Server variant)
+
+> SIGTERM graceful-drain (kriteria standar template untuk server tradisional) **tidak berlaku** untuk shape ini — Cloudflare Pages Functions berjalan di isolate model Workers, tanpa proses persisten yang menerima SIGTERM; siklus hidup request ditangani penuh oleh platform. Kriteria itu sengaja tidak dijadikan task.
 
 #### Task #025 — Validate Health Endpoint In Staging
 - **Phase:** Phase 7 — Deployment

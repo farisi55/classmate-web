@@ -1,8 +1,8 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
-version: 1.0.5
+version: 1.0.6
 source: prd
-last_updated: 2026-09-30
+last_updated: 2026-10-15
 project_shape: fullstack
 simple_mode: false
 external_assets: true
@@ -148,7 +148,7 @@ external_assets: true
 - Observability — alerting: tidak ada untuk situs utama; kegagalan workflow backup cukup notifikasi email bawaan GitHub Actions ke pemilik repo, tidak ada channel tambahan (Slack, dll.)
 - Health check endpoint: single, non-orchestrated — `GET /api/health` → `{ status, kv_reachable }`
 - Build pipeline: Cloudflare Pages native Git integration — auto-deploy tiap push ke `main`, preview deployment tiap PR; **jalur terpisah** dari GitHub Actions scheduled workflow (backup harian) — dua pipeline independen, kegagalan satu tidak mem-block yang lain
-- Multi-environment: dev (`astro dev`/`wrangler dev` lokal) / preview (tiap PR) / prod
+- Multi-environment: dev (`astro dev`/`wrangler dev` lokal) / preview (tiap PR) / staging (`classmate-web-staging.pages.dev` — proyek Pages manual-upload *direct* di akun Cloudflare yang sama dengan namespace KV; binding `CLASSMATE_KV` disinkronkan wrangler saat `wrangler pages deploy`; dibuat Task #023, menjadi target Phase 7 — deploy dari `main` dengan `--branch main` supaya alias root (production stage) melayani state terkini) / prod
 - Backup strategy: ticker KV di-backup otomatis harian, cron `0 19 * * *` UTC = 02:00 WIB, lewat GitHub Actions → `GET /api/admin/ticker-export` → commit `backups/ticker-messages.json`. Retensi: file tunggal, di-overwrite (bukan arsip historis). Kode & konten (termasuk gambar) ter-versioning penuh di git; foto mentah permanen di Google Drive.
 - RTO: <1 jam (rollback 1-klik Cloudflare Pages)
 - RPO: ~24 jam (cocok dengan kadensi backup harian)
