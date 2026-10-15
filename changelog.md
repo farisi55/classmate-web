@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
 knowledge_version: 1.0.5
-changelog_version: 1.0.21
+changelog_version: 1.0.22
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -545,25 +545,36 @@ simple_mode: false
 - **Notes:** Deviation tercatat: AC2 mustahil dieksekusi tanpa akses akun CF yang benar (re-scope di atas). Temuan lingkungan yang menuntut rekonsiliasi developer: (a) `astro.config.mjs` `site:` + `docs/web-analytics.md` menunjuk `classmate-web.pages.dev` yang kini menyajikan situs lain; (b) `classmate.co.id` (target workflow backup harian #014) tidak resolve dari lingkungan ini — Task #023 wajib memastikan target deploy/staging yang sebenarnya sebelum smoke test. Pre-commit hook berjalan pada commit task ini (lint-staged). Forward impact: Task #022 (rollback) kini punya `docs/release-process.md` sebagai referensi silang; Task #026/#027 tidak terpengaruh.
 - **Knowledge drift:** none (`docs/` sudah tercantum di §3 sejak #013; penomoran semver + tag mengimplementasikan knowledge §7 apa adanya; tanpa library/naming/pattern baru)
 
+### Task #022 — Document & Test Rollback Procedure ✅
+- **Completed:** 2026-10-15
+- **Phase:** Phase 7 — Deployment (Server variant)
+- **Status:** OK — **re-scoped during execution** (uji rollback dashboard live ditunda ke developer; persetujuan eksplisit via question tool — preseden Task #015/#021)
+- **Branch:** feat/task-022-document-test-rollback-procedure
+- **Files created / modified:**
+  - `docs/rollback-procedure.md` — **baru**: runbook insiden rollback — tabel "apa yang di-rollback vs tidak" (KV ticker/Access/DNS tak tersentuh), kapan pakai vs perbaikan konten, prasyarat (≥2 production deployment; preview bukan target rollback), langkah dashboard langkah-demi-langkah (Deployments → ⋯ → "Rollback to this deployment", konfirmasi resmi docs 2026-04-21), checklist verifikasi pasca-rollback 9 butir termasuk pengukuran waktu <10 menit, jalur rolling-forward, fallback rebuild dari tag, **bagian Deferred Live Test** untuk developer
+- **Acceptance criteria met:**
+  - [x] (re-scoped) ~~Rollback dari deployment saat ini ke deployment sebelumnya diuji sekali di dashboard, <10 menit, situs tetap dapat diakses~~ — **tidak mungkin dieksekusi di lingkungan eksekusi** (re-check `wrangler pages project list` = 0 proyek, sama dengan temuan #021; rollback Pages tidak punya jalur CLI/API — hanya dashboard, terverifikasi dari docs resmi + `wrangler pages deployment --help` 4.151.0: hanya list/create/tail/delete) — uji hidup dijadwalkan developer dengan checklist siap-pakai di `docs/rollback-procedure.md` §Deferred Live Test
+  - [x] Langkah rollback didokumentasikan cukup detail untuk diikuti orang lain selain yang menguji — langkah dashboard numerik dari docs resmi Cloudflare (sumber dikutip + tanggal), prerequisite, verifikasi 9 butir, fallback, tanpa pengetahuan internal tambahan
+- **Security gate:** FULL — **all checks passed** (0 simple-mode skips; 1 deviation terbawa: CVE pre-existing tree Astro 4.x, tanpa perubahan dependency task ini, terdokumentasi #018):
+  - **BASIC (13):** [x] tanpa secret hardcoded (dokumen hanya berisi langkah dashboard + perintah publik) · [x] config sensitif via env (tak berubah) · [x] tanpa eval/exec input eksternal · [x] error tanpa stack trace (tanpa perubahan runtime) · [x] debug mode OFF (tak berubah; build diverifikasi) · [x] CORS allowlist (tak berubah) · [x] `.gitignore` proteksi secret (tak berubah, #001) · [x] tanpa kredensial default · [x] pre-commit aktif (lint-staged berjalan pada commit task ini) · [x] CI tanpa debug tracing, secret masked (tak berubah, #017) · [x] Actions SHA-pinned (tak berubah, #017) · [x] branch protection `main` (terpasang #017) · [N/A] Dockerfile — tanpa container (knowledge §2)
+  - **STANDARD (24):** tugas docs/runbook **nol perubahan kode runtime/API** — [x] auth rute terproteksi tak berubah (Access di edge; runbook memverifikasi lapisan Access tetap hidup pasca-rollback via lompatan `/admin`) · [x] authz via Access Application (tak berubah) · [x] tanpa PII di log (tanpa logging baru; runbook meminta pencatatan SHA/timestamp, bukan kredensial) · [x] output HTML ter-escape (tak berubah, #017) · [x] tanpa perubahan API · [x] redirect policy tak berubah · [N/A] sisanya (upload, RBAC in-app, DB, path user, field sensitif UI, brute-force, HIBP, reset-token, session, cookie, mobile storage, method override, Content-Type, ReDoS, validasi input) — mekanisme tidak ada/didak sentuh (knowledge §5/§9)
+  - **FULL (22):** [x] security header + CSP — checklist verifikasi pasca-rollback mencakup ke-5 header + CSP (regenerasi `_headers` per build terverifikasi ulang task ini: 15 halaman) · [x] tanpa source map produksi (tak berubah, 0 `.map` diverifikasi #021) · [x] lockfile + `npm ci` (tanpa perubahan dependency) · [x] rate limit infra — Cloudflare edge (tak berubah) · [N/A] CSRF — auth via header · [N/A] constant-time & JWT alg-pin — Access edge (knowledge §9) · [N/A] mass assignment/price/entitlement/encrypt-at-rest/MFA — tanpa perubahan API/payment/data sensitif · [N/A] SSRF — runbook hanya mengarahkan ke dashboard/dash.cloudflare.com (allowlist implisit: origin Cloudflare resmi, tanpa fetch URL input user) · [N/A] LLM/XXE/webhook-sig — tidak ada (knowledge §2) · [N/A] SRI CDN — justifikasi #018 · [N/A] error-tracking PII — belum diinisialisasi (knowledge §8) · **[DEVIATION terbawa]** CVE high/critical ≠ 0: 5 advisory pre-existing (breaking-only untuk Astro 4.x), analisis exposure di #018
+- **Scalability gate:** FULL — **all checks passed** (0 simple-mode skips; item runtime n.a. — tugas docs/runbook, nol kode runtime):
+  - **BASIC (7):** [x] tanpa blok sinkron (tanpa kode runtime) · [x] tanpa timeout/pool hardcoded baru · [N/A] pool DB — tanpa DB · [x] I/O eksternal timeout tak berubah (`--max-time 60`, #018) · [x] tanpa mutable state global · [N/A] correlation ID — keputusan knowledge §5 · [N/A] structured logger — knowledge §8
+  - **STANDARD (9):** seluruh item n.a. murni (tanpa perubahan query/endpoint/list/I/O/memori/struktur): [N/A] query plan · [N/A] N+1 · [N/A] pagination · [N/A] I/O async baru · [N/A] akumulasi memori · [N/A] soft-delete · [N/A] multi-table transaction · [N/A] live migration · [N/A] GraphQL
+  - **FULL (12):** [x] caching tak berubah (header dari #018) · [x] stateless tak berubah · [x] operasi panjang di background (backup cron, tak berubah) · [x] resource dilepas (proses build/verifikasi berakhir sendiri) · [x] timeout outbound tak berubah · [N/A] pooling DB · [N/A] circuit breaker — tanpa outbound call di request path · [N/A] antrean — tanpa queue · [x] rate limit infra — Cloudflare edge · [x] idempotency tak berubah (test replay #018 hijau) · [x] health endpoint `/api/health` — menjadi langkah verifikasi utama runbook (live staging di Task #023/#025) · **[DEFER by design]** baseline load Stage 1+2 — tetap Task #024 · **[DEFER by design]** uji rollback live — AC1 task ini sendiri, dire-scope ke developer (alasan di Notes)
+- **Observability gate (Phase 7 FULL):** [x] structured logging — platform-native Pages logs (knowledge §8, tak berubah) · [x] log level via config — platform-native · [N/A] error tracking PII scrub — error tracking belum diinisialisasi (knowledge §8) · [x] health endpoint — dijadikan poros checklist verifikasi pasca-rollback (unit test hijau; live di #023/#025) · [x] key business events — runbook mewajibkan pencatatan SHA deployment sebelum/sesudah + waktu mulai/akhir (jejak insiden minimum) · [N/A] alert rule — keputusan eksplisit knowledge §8 (tanpa alerting situs) · **[DEFER by design]** backup restore di staging — Task #026 (AC task itu sendiri) · **[DEFER by design]** uji rollback live — dire-scope developer (AC1, dijadwalkan ulang via checklist siap-pakai)
+- **Regression:** Passed 80 unit, 0 failed (679ms) · lint 0 error 0 warning · build (`astro check` + 15 halaman + `generate-headers`) OK · file baru lolos Prettier
+- **Decisions made:**
+  - [SCOPE] Re-scope AC1 uji-rollback-live disetujui developer via question tool ("Docs only, AC1 re-scoped"): blocker sama dengan #021 (akun CF terautentikasi punya 0 proyek Pages — diverifikasi ulang sebelum bertanya); tambahan: rollback Pages **hanya didukung via dashboard** — `wrangler pages deployment` 4.151.0 hanya punya list/create/tail/delete (diverifikasi `--help`), dan docs resmi API Pages tidak mengekspos metode rollback — sehingga bahkan dengan akses CLI pun uji ini tetap butuh dashboard
+  - [DOC] Runbook disusun dari **sumber resmi Cloudflare** (halaman Rollbacks, last updated 2026-04-21, di-fetch saat task) — bukan ingatan; fakta kunci yang membentuk langkah: target rollback = production deployment sukses saja, **preview bukan target**, rolling-forward setelah rollback diizinkan, perubahan production **instan**
+  - [DOC] Batasan domain rollback didokumentasikan eksplisit (tabel affects/doesn't-affect): rollback hanya mengembalikan kode+aset deployment — **KV ticker tak tersentuh** — supaya responder insiden tidak salah memakai rollback untuk memperbaiki konten ticker buruk (jalur benar: admin POST atau restore backup Task #026)
+- **Notes:** Deviation tercatat: AC1 mustahil dieksekusi tanpa akses akun CF yang benar (re-scope di atas); temuan lingkungan #021 (akun CF mismatch, `classmate-web.pages.dev` menyajikan situs lain, `classmate.co.id` tak resolve) dibawa masuk sebagai peringatan prasyarat di runbook — Task #023 tetap wajib memastikan target deploy/staging yang sebenarnya. Pre-commit hook berjalan pada commit task ini. Forward impact: Task #024 (load test) & #025 (health staging) kini punya runbook referensi; `docs/backup-restore-runbook.md` (#026) dirujuk dari tabel "gunakan rollback untuk X, bukan untuk Y".
+- **Knowledge drift:** none (`docs/` ∈ §3 sejak #013; runbook operasional tidak mengubah library/naming/pattern/API/infra yang terdokum di knowledge; rollback 1-klik + RTO <1 jam sudah sesuai knowledge §8 apa adanya)
+
 ## [IN PROGRESS]
 
 ### Phase 7 — Deployment (Server variant)
-
-#### Task #022 — Document & Test Rollback Procedure
-- **Phase:** Phase 7 — Deployment
-- **Scope:** Dokumentasikan & uji langkah rollback 1-klik Cloudflare Pages ke deployment sebelumnya.
-- **Files to create / modify:** `docs/rollback-procedure.md` (baru)
-- **Acceptance criteria:**
-  - [ ] Rollback dari deployment saat ini ke deployment sebelumnya diuji sekali di dashboard, selesai <10 menit, situs tetap dapat diakses selama proses
-  - [ ] Langkah rollback didokumentasikan cukup detail untuk diikuti orang lain selain yang menguji
-- **Dependencies:** Task #021
-- **Decisions made:** (fill after execution — never leave blank)
-
-## [NEXT TASKS]
-
-### Phase 7 — Deployment (Server variant)
-
-> SIGTERM graceful-drain (kriteria standar template untuk server tradisional) **tidak berlaku** untuk shape ini — Cloudflare Pages Functions berjalan di isolate model Workers, tanpa proses persisten yang menerima SIGTERM; siklus hidup request ditangani penuh oleh platform. Kriteria itu sengaja tidak dijadikan task.
 
 #### Task #023 — Staging Smoke Test & Env Var Confirmation
 - **Phase:** Phase 7 — Deployment
@@ -574,6 +585,12 @@ simple_mode: false
   - [ ] `GET /api/health` di preview mengembalikan `kv_reachable: true`
 - **Dependencies:** Task #006, Task #008
 - **Decisions made:** (fill after execution — never leave blank)
+
+## [NEXT TASKS]
+
+### Phase 7 — Deployment (Server variant)
+
+> SIGTERM graceful-drain (kriteria standar template untuk server tradisional) **tidak berlaku** untuk shape ini — Cloudflare Pages Functions berjalan di isolate model Workers, tanpa proses persisten yang menerima SIGTERM; siklus hidup request ditangani penuh oleh platform. Kriteria itu sengaja tidak dijadikan task.
 
 #### Task #024 — Two-Stage Load Test
 - **Phase:** Phase 7 — Deployment
