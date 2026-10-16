@@ -1,7 +1,7 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
 knowledge_version: 1.0.6
-changelog_version: 1.0.23
+changelog_version: 1.0.24
 created: 2026-09-03
 status: in_progress
 milestone: 1 of 1
@@ -603,25 +603,45 @@ simple_mode: false
 - **Notes:** Deviasi tercatat: environment staging **bukan** proyek Git-integration produksi — proyek staging belum punya Cloudflare Access App di depannya, tetapi lapisan pengecekan header JWT **di dalam fungsi** tetap menegakkan 401 (diverifikasi live), jadi tulis-publik tetap tertutup; lingkungan staging bersifat preview internal (Access produksi tetap di domain produksi via Zero Trust — `docs/access-setup.md`). Temuan lingkungan #021 tetap terbuka untuk developer (akun CF mismatch proyek produksi, `classmate-web.pages.dev` disita situs lain, `classmate.co.id` tak resolve) — staging ini adalah lingkungan Phase 7 yang berfungsi penuh sampai itu beres. Kandidat tindak lanjut: pertimbangkan Access sederhana / hapus proyek staging setelah Phase 7 selesai. Forward impact: Task #024 (load test) memakai `classmate-web-staging.pages.dev` sebagai target; Task #025 (health staging) memakai endpoint yang sama.
 - **Knowledge drift:** UPDATE REQUIRED: `@knowledge` §8 — pemicu "Infra ∉ §8": lingkungan staging baru `classmate-web-staging.pages.dev` (proyek Pages manual-upload + binding `CLASSMATE_KV` sinkron wrangler) tidak tercatat di Multi-environment → **resolved in-task**: baris Multi-environment diperbarui, knowledge version 1.0.5 → 1.0.6, `knowledge_version` di changelog di-sync
 
+### Task #024 — Two-Stage Load Test ✅
+- **Completed:** 2026-10-16
+- **Phase:** Phase 7 — Deployment (Server variant)
+- **Status:** OK — **Run A valid; Run B dibuang karena insiden environment** (bukan kegagalan task; opsi ini dipilih developer via question tool)
+- **Branch:** feat/task-024-two-stage-load-test
+- **Files created / modified:**
+  - `scripts/load-test.mjs` — harness load test 2-tahap tanpa dependensi (Node built-in `fetch`); concurrency = VU persis, timeout eksplisit per request, `redirect: 'manual'` (3xx tidak ditelan jadi 200), persentil nearest-rank; helper murni terekspor + entry CLI (exit non-zero bila ada error) — mengikuti pola `scripts/check-route-parity.mjs`
+  - `scripts/load-test.test.ts` — 14 unit test terisolasi (percentile, summarizeLatencies, summarizeRun, parseArgs) — pola sama dengan `scripts/check-route-parity.test.ts`
+  - `package.json` — tambah script `test:load` (1 baris)
+  - `docs/load-test-results.md` — hasil terukur Stage 1 & Stage 2, bukti & laporan insiden environment, penilaian AC, cara reproduksi, follow-up
+- **Acceptance criteria met:**
+  - [x] Stage 1 (10 VU/60s) error rate 0% terhadap `/api/ticker` & halaman statis — Run A: 0 error / 74.118 request (`/api/ticker` 374,19 rps, `/` 243,32 rps); `/api/ticker` memang memanggil Function, dikonfirmasi metrik invocations Pages Functions (lihat Notes)
+  - [x] Stage 2 (≥50 VU/≥2 menit) selesai dengan P95/P99 tercatat — Run A 50 VU/120 s per target: `/api/ticker` P95 **44,13 ms** / P99 **74,30 ms**; `/` P95 **122,90 ms** / P99 **324,63 ms**; 0 error
+  - [~] memory endpoint layer akhir ≤120% dari awal — **re-scope N/A (platform-limited)**, disetujui developer via question tool; bukti terverifikasi live: `pagesFunctionsInvocationsAdaptiveGroups` tidak punya kuota memori (`unknown field "memoryUsageBytesP50"`), sedangkan `workersInvocationsAdaptive` (yang punya) tidak memuat script Pages; isolate Pages tidak punya proses persisten untuk disampel RSS
+  - [~] nol error 5xx selama deploy pertengahan-tes — **N/A sesuai kondisi AC sendiri** ("kalau deploy disimulasikan bersamaan"); deploy tidak disimulasikan; secara independen 0 `5xx` di seluruh run
+  - [x] (tambahan, diminta developer) Konfirmasi independen endpoint: run lokal `wrangler pages dev` — 0 error di 10 VU/60 s (13.515 req) dan 50 VU/120 s (12.858 req)
+- **Security gate:** FULL — all checks passed (0 simple-mode skips; 1 deviasi terbawa: CVE pre-existing tree Astro 4.x — **tanpa perubahan dependency sama sekali**, `package-lock.json` tidak tersentuh, analisis exposure di #018)
+  - **BASIC (13):** [x] tanpa secret hardcoded — token OAuth wrangler dibaca ke variabel shell, tidak pernah dicetak (hanya panjangnya) · [x] config sensitif via env/argumen CLI · [x] tanpa eval/exec · [x] error tidak membocorkan stack trace/path internal — hanya pesan validasi sendiri + teks error jaringan yang di-whitespace-collapse & dipotong 160 char · [x] debug mode OFF — target = build produksi `astro build` · [x] CORS allowlist tanpa wildcard (kode fungsi tak disentuh) · [x] `.gitignore` proteksi `.env`/`*.pem`/`*.key`/`*.p12` utuh · [x] tanpa kredensial admin default/seeded account · [x] pre-commit hook aktif — lint-staged berjalan pada commit task ini · [x] CI/CD tanpa debug tracing, secret masked (tak berubah) · [x] Actions SHA-pinned (tak berubah) · [x] branch protection `main` tak disentuh (loop hanya menyentuh `dev`) · [N/A] Dockerfile — tanpa container (knowledge §2)
+  - **STANDARD (24):** [x] input tervalidasi — `parseArgs` menolak base-url kosong & vu/duration/timeout non-positif sebelum kerja apa pun; respons upstream diperlakukan opaque (hanya status HTTP dipakai, body dibuang tanpa di-parse) · [x] regex bebas catastrophic backtracking — hanya `/\s+/g` atas slice 160 char · [x] konten user di log disanitasi (whitespace-collapsed + dipotong) · [x] tanpa perubahan skema API (additive-only trivial terpenuhi) · [N/A] body-size/upload, auth rute terproteksi, authz service-layer/IDOR, rute admin+audit, DB parameterized, path input user, PII di log, field sensitif UI, brute-force, HIBP, reset-token, umur/rotasi token, session, logout server-side, Set-Cookie, secure storage mobile, HTTP method override, Content-Type sebelum body, redirect allowlist — mekanisme tidak ada/tidak disentuh; harness **tidak mengikuti redirect sama sekali** sehingga tidak pernah menavigasi ke URL turunan respons
+  - **FULL (22):** [x] security header + CSP **diverifikasi live** di staging (`/` dan `/api/ticker`): HSTS, `x-frame-options: DENY`, `x-content-type-options`, `referrer-policy`, `permissions-policy` · [x] CSP tanpa `unsafe-inline`/`unsafe-eval` (diregenerasi per build, sha256 hashes, live) · [x] rate limit infra — edge Cloudflare always-on · [x] source map produksi 0 (diverifikasi di `dist/`) · [x] lockfile pin + `npm ci` — tanpa dependency baru · [x] respons API tanpa field berlebih / mass assignment (tanpa perubahan API) · [N/A] CSRF — semua request GET, tanpa cookie session · [N/A] constant-time compare & JWT alg-pin — verifikasi di edge Access (knowledge §9) · [N/A] rate limit per-user shared store — knowledge §5 (Access membatasi penulis, tanpa counter in-app) · [N/A] price/entitlement/encrypt-at-rest/MFA/SSRF/LLM/XXE/webhook-sig/SRI/error-tracking-PII — tidak ada mekanisme terkait (harness jalan di workstation operator, bukan di request path aplikasi; URL-nya fixed dari operator, bukan input user)
+- **Scalability gate:** FULL — all checks passed (0 simple-mode skips)
+  - **BASIC (7):** [x] tanpa blocking sinkron di jalur async · [x] tanpa pool/timeout/batch hardcoded — VU, durasi, timeout semuanya dari CLI dengan default terdokumentasi · [N/A] pool koneksi DB — tanpa DB · [x] I/O eksternal ber-timeout eksplisit (`AbortSignal.timeout`, default 10.000 ms, configurable) · [x] tanpa mutable state global lintas request — accumulator lokal per-run · [N/A] correlation ID — keputusan knowledge §5 · [x] tanpa logging per-request di hot loop (hanya counter agregat) → nol latensi tambahan
+  - **STANDARD (9):** [x] validasi murah sebelum operasi mahal — `parseArgs` sebelum panggilan jaringan pertama · [x] seluruh I/O async/non-blocking · [x] tanpa akumulasi memori tak terbatas — sampel dibatasi durasi×throughput (durasi adalah parameter tetap) · [N/A] query plan, N+1, cek token-revocation, reuse data authz, pagination list, soft-delete, transaksi multi-tabel, migrasi live-traffic, GraphQL — tanpa DB/authz/endpoint baru
+  - **FULL (12):** [x] caching — header fungsi `Cache-Control: public, max-age=60` **terkonfirmasi** di instance lokal; `max-age=0, must-revalidate` yang terlihat di staging terbukti header fallback statis (bagian insiden), bukan bug caching · [x] stateless — model isolate Pages Functions · [x] timeout outbound eksplisit · [x] resource dilepas — server lokal dimatikan, port 8788 diverifikasi tertutup, nol proses `workerd` tersisa · [N/A] pooling DB, circuit breaker, queue/backpressure — tanpa komponen itu · [x] rate limit infra — edge Cloudflare · [x] idempotency tak berubah (POST ticker full-overwrite, test replay #018 hijau) · [x] health endpoint tersedia & diuji (temuan hazard dicatat, lihat Observability) · **[DEVIASI tercatat]** load baseline Stage 1+2 **dijalankan** (tidak di-skip, `simple_mode: false`), namun eksekusi kedua (Run B) tidak sah karena insiden environment — bukan karena item gate ini dilewati
+- **Observability gate (Phase 7 FULL):** [x] structured logging platform-native Pages logs (knowledge §8, tak berubah) · [x] log level via config — platform-native, tanpa verbose logging app · [N/A] error tracking + PII scrub — error tracking belum diinisialisasi (knowledge §8) · [x] health endpoint diuji langsung — **dan ditemukan hazard nyata: `GET /api/health` mengembalikan `200` + HTML saat `/api/*` tidak ter-route ke Functions**, sehingga monitor berbasis status-code melaporkan sehat padahal API mati → masuk follow-up (validasi body/schema + alert rule) · [x] key business events — identitas deployment (`6273e437…`, commit `8de5096`) & timestamp tiap run tercatat di dokumen hasil · [N/A] alert rule — keputusan eksplisit knowledge §8 (tanpa alerting situs) · [N/A] backup restore staging — Task #026 (AC task itu) · [N/A] uji prosedur rollback — Task #022/#023 (sudah)
+- **Regression:** `npm run test` → **Test Files 7 passed (7), Tests 94 passed (94), 0 failed** (14 test baru) · `npm run lint` 0 error 0 warning · `npm run build` → `astro check` **0 error** + 15 halaman + `generate-headers` OK · harness negative-path terverifikasi: target tak terjangkau → **exit 1** dengan error rate 100%
+- **Decisions made:**
+  - [TOOL] Harness load test ditulis dependency-free memakai Node built-in `fetch` (bukan menambah k6/autocannon/artillery) — menghindari library baru di knowledge §2 dan satu-satunya call site; di-commit di `scripts/` mengikuti preseden `check-route-parity.mjs` + `.test.ts` supaya hasilnya reproducible
+  - [TEST] Konkurensi diimplementasikan sebagai N worker async (satu request in-flight masing-masing) alih-alih mengandalkan pool internal runtime, supaya "VU" berarti persis N request bersamaan; timeout per request eksplisit 10 s
+  - [TEST] `redirect: 'manual'` eksplisit — memastikan `3xx` muncul sebagai error non-2xx, tidak ditelan menjadi `200` target redirect; diverifikasi tidak mengubah hasil (semua 200)
+  - [SCOPE] Re-scope AC memory endpoint-layer ke N/A (platform-limited) — disetujui developer via question tool setelah bukti API dikumpulkan; alternatif lokal/RSS ditolak karena mengukur runtime yang berbeda dari produksi
+  - [SCOPE] Run B dibuang dari bukti AC, bukan dipakai sebagai "varians platform" — sebabnya bukan generasi beban, melainkan `/api/ticker` yang tidak lagi mencapai Function; klaim penyebab alternatif sengaja dihindari sampai terbukti
+  - [TEST] Hasil didokumentasikan apa adanya termasuk yang buruk: run lokal 50 VU **tidak** memenuhi target P95 < 300 ms (665 ms) karena generator & server berbagi satu CPU — dilaporkan sebagai batasan, bukan disembunyikan
+- **Notes:** **Temuan insiden (penting):** di tengah sesi, staging `classmate-web-staging.pages.dev` berhenti me-route `/api/*` ke Pages Functions. Bukti: metrik `pagesFunctionsInvocationsAdaptiveGroups` menunjukkan script `pages-worker--21387479-production` = **332.762 request, 0 error, semuanya di bucket 09:00Z, dan nol setelahnya**; angka itu cocok dengan total `/api/ticker` Run A (44.913 + 286.510 = 331.423) + probe (≈1.081) = 332.504 ≈ 332.762, sementara 89.539 request `/api/ticker` Run B **tidak muncul** di metrik. Sejak ~09:20Z `GET /api/health` & `/api/ticker` mengembalikan `200` + `Content-Type: text/html` (23.807 byte = halaman beranda), dan path acak (`/this-path-does-not-exist-xyz`) juga `200` + halaman beranda. Deployment tidak berubah (`6273e437`, 17 jam), latensi single-request sehat (~45–75 ms TTFB termasuk TLS), tanpa `429`/`Retry-After`, TCP lokal bersih (`TIME_WAIT`=87) → bukan deployment baru, bukan throttling, bukan kehabisan port. **Penyebab belum dapat dipastikan** dari tooling yang ada; hipotesis alokasi request free-tier dicatat sebagai hipotesis (bukan kesimpulan) karena jumlah invokasi teramati (332.762) jauh di atas alokasi 100.000/hari yang terdokumentasi. Tanpa temuan ini, hasil Run B (terlihat "hijau": 0 error, 200 semua) akan salah dilaporkan sebagai pengukuran endpoint ticker. Komit task ini dijalankan pada branch `feat/task-024-two-stage-load-test`; pre-commit hook (lint-staged) berjalan. `docs/load-test-results.md` §5 memuat laporan lengkap + cara memverifikasi `content_type` sebelum mempercayai run edge. Catatan kecil non-blocking: daftar `scripts/` di knowledge §3 hanya menyebut `generate-headers.mjs` (sudah tidak lengkap sejak `check-route-parity.mjs` di #020) — tidak diubah di task ini karena tidak ada pemicu drift (folder top-level tidak baru).
+- **Knowledge drift:** none (harness memakai Node built-in — tanpa library baru di §2; naming kebab-case/camelCase sesuai §4; `scripts/` sudah ada di §3 sehingga tidak ada modul top-level baru; tanpa perubahan API §5, error-handling §4, infra §8, delete §7, atau isolasi test §4). Insiden environment sengaja **tidak** dipromosikan ke §8/§9 karena statusnya transient dan penyebabnya belum terkonfirmasi — dicatat sebagai follow-up di dokumen hasil, bukan sebagai fakta permanen di sumber kebenaran.
+
 ## [IN PROGRESS]
 
 ### Phase 7 — Deployment (Server variant)
-
-#### Task #024 — Two-Stage Load Test
-- **Phase:** Phase 7 — Deployment
-- **Scope:** `simple_mode: false` → **Stage 2 wajib dijalankan, tidak di-skip**. Stage 1 Smoke: 10 VU / 60 detik. Stage 2 Capacity: VU = max(initial ~10 concurrent, 6-month target concurrent <100 × 10% ≈ 10), floor 50 VU per aturan template → **50 VU minimum**, durasi ≥2 menit, catat P95/P99/error rate.
-- **Files to create / modify:** `docs/load-test-results.md` (baru)
-- **Acceptance criteria:**
-  - [ ] Stage 1 (10 VU/60s) selesai dengan error rate 0% terhadap `/api/ticker` & halaman statis
-  - [ ] Stage 2 (≥50 VU/≥2 menit) selesai dengan P95/P99 tercatat, memory di endpoint layer akhir ≤120% dari awal, nol error 5xx selama deploy pertengahan-tes (kalau deploy disimulasikan bersamaan)
-- **Dependencies:** Task #023
-- **Decisions made:** (fill after execution — never leave blank)
-
-## [NEXT TASKS]
-
-### Phase 7 — Deployment (Server variant)
-
-> SIGTERM graceful-drain (kriteria standar template untuk server tradisional) **tidak berlaku** untuk shape ini — Cloudflare Pages Functions berjalan di isolate model Workers, tanpa proses persisten yang menerima SIGTERM; siklus hidup request ditangani penuh oleh platform. Kriteria itu sengaja tidak dijadikan task.
 
 #### Task #025 — Validate Health Endpoint In Staging
 - **Phase:** Phase 7 — Deployment
@@ -632,6 +652,12 @@ simple_mode: false
   - [ ] Skenario KV terdegradasi (disimulasikan) tercermin di response tanpa membuat endpoint lain (mis. `/api/ticker`) ikut crash
 - **Dependencies:** Task #008, Task #023
 - **Decisions made:** (fill after execution — never leave blank)
+
+## [NEXT TASKS]
+
+### Phase 7 — Deployment (Server variant)
+
+> SIGTERM graceful-drain (kriteria standar template untuk server tradisional) **tidak berlaku** untuk shape ini — Cloudflare Pages Functions berjalan di isolate model Workers, tanpa proses persisten yang menerima SIGTERM; siklus hidup request ditangani penuh oleh platform. Kriteria itu sengaja tidak dijadikan task.
 
 #### Task #026 — Test Backup Restore In Staging
 - **Phase:** Phase 7 — Deployment
