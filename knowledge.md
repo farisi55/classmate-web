@@ -1,8 +1,8 @@
 ---
 project: Classmate Indonesia — Company Profile & Activity Catalog Website
-version: 1.0.6
+version: 1.0.7
 source: prd
-last_updated: 2026-10-15
+last_updated: 2026-10-21
 project_shape: fullstack
 simple_mode: false
 external_assets: true
@@ -52,13 +52,14 @@ external_assets: true
   └── health.ts                # GET, publik
   public/img/        # logo/favicon situs sendiri saja — tidak pernah R2-backed
   e2e/               # Playwright E2E specs — smoke placeholder sejak Phase 1, suite lengkap di Task #019
-  docs/              # project documentation — audit-baseline.md, access-setup.md, (api.yaml di Task #027)
+  docs/              # project documentation — audit-baseline.md, access-setup.md, a11y-audit.md, load-test-results.md, release-process.md, rollback-procedure.md, backup-restore-runbook.md, (api.yaml di Task #027)
   .husky/pre-commit   # pre-commit hook: blokir file secret + lint-staged (husky v9, Phase 1)
   playwright.config.ts  # E2E runner — base URL dioverride via env E2E_BASE_URL (lokal vs preview)
   vitest.config.ts   # unit test runner config (Vitest, Phase 1)
   astro.config.mjs    # output: 'static'
   .github/workflows/backup-ticker.yml
-  scripts/             # generate-headers.mjs — post-build: tulis dist/_headers (5 security header + CSP sha256) + test unitnya (Task #018)
+  backups/            # snapshot ticker hasil backup harian — ticker-messages.json (Task #014 workflow; runbook restore: docs/backup-restore-runbook.md)
+  scripts/             # generate-headers.mjs — post-build: tulis dist/_headers (5 security header + CSP sha256, Task #018) · check-route-parity.mjs — CLI parity rute bilingual (Task #020) · load-test.mjs — harness load 2 tahap (Task #024) + test unitnya
   ```
 - Layer responsibilities: `src/data/*.ts` = sumber konten statis (repository); `lib/media.ts` = satu-satunya titik resolusi gambar (data file tidak pernah import gambar langsung); `components/islands/` = satu-satunya tempat React dihidrasi client-side; `functions/api/` = satu handler per endpoint, tanpa layering tambahan
 - Design patterns: build-time asset resolver (`import.meta.glob` + `getImage()`, dipusatkan di `lib/media.ts`); scheduled-pull untuk backup (GitHub Actions men-*pull* lewat endpoint terproteksi, aplikasi tidak pernah men-*push* keluar)
@@ -149,7 +150,7 @@ external_assets: true
 - Health check endpoint: single, non-orchestrated — `GET /api/health` → `{ status, kv_reachable }`
 - Build pipeline: Cloudflare Pages native Git integration — auto-deploy tiap push ke `main`, preview deployment tiap PR; **jalur terpisah** dari GitHub Actions scheduled workflow (backup harian) — dua pipeline independen, kegagalan satu tidak mem-block yang lain
 - Multi-environment: dev (`astro dev`/`wrangler dev` lokal) / preview (tiap PR) / staging (`classmate-web-staging.pages.dev` — proyek Pages manual-upload *direct* di akun Cloudflare yang sama dengan namespace KV; binding `CLASSMATE_KV` disinkronkan wrangler saat `wrangler pages deploy`; dibuat Task #023, menjadi target Phase 7 — deploy dari `main` dengan `--branch main` supaya alias root (production stage) melayani state terkini) / prod
-- Backup strategy: ticker KV di-backup otomatis harian, cron `0 19 * * *` UTC = 02:00 WIB, lewat GitHub Actions → `GET /api/admin/ticker-export` → commit `backups/ticker-messages.json`. Retensi: file tunggal, di-overwrite (bukan arsip historis). Kode & konten (termasuk gambar) ter-versioning penuh di git; foto mentah permanen di Google Drive.
+- Backup strategy: ticker KV di-backup otomatis harian, cron `0 19 * * *` UTC = 02:00 WIB, lewat GitHub Actions → `GET /api/admin/ticker-export` → commit `backups/ticker-messages.json`. Retensi: file tunggal, di-overwrite (bukan arsip historis). **Prosedur restore (overwrite penuh satu key KV `ticker:messages`) + catatan jebakan (eventual consistency ~60 dtk, cache edge `max-age=60`, `--remote` wajib) + hasil drill staging: `docs/backup-restore-runbook.md` (Task #026).** Kode & konten (termasuk gambar) ter-versioning penuh di git; foto mentah permanen di Google Drive.
 - RTO: <1 jam (rollback 1-klik Cloudflare Pages)
 - RPO: ~24 jam (cocok dengan kadensi backup harian)
 - Rollback strategy: 1-klik rollback bawaan Cloudflare Pages ke deployment sebelumnya

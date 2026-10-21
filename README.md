@@ -91,6 +91,22 @@ application** → **Self-hosted** → domain: `<project>.pages.dev`, path: `/adm
 Sesuai keputusan brief: pakai `*.pages.dev` dulu sampai situs disetujui, baru beli
 domain dan hubungkan lewat **Custom domains** di dashboard project Pages.
 
+### 7. Backup & restore pesan ticker (operasional)
+
+Snapshot ticker disimpan di `backups/ticker-messages.json` — di-commit workflow
+harian `.github/workflows/backup-ticker.yml`. Kalau key KV `ticker:messages`
+hilang atau isinya rusak, restore itu satu perintah:
+
+```bash
+npx wrangler kv key put "ticker:messages" \
+  --path backups/ticker-messages.json --binding=CLASSMATE_KV --remote
+```
+
+Verifikasi: `curl -s "https://<domain-kamu>/api/ticker?cb=$(date +%s)"`.
+Runbook lengkap — termasuk jebakan eventual consistency KV (~60 detik), cache
+edge `max-age=60`, dan wajibnya flag `--remote` — ada di
+`docs/backup-restore-runbook.md`.
+
 ## Struktur proyek
 ```
 src/
@@ -99,6 +115,7 @@ src/
   layouts/      # BaseLayout (head, ticker, header, footer, WA button)
   pages/        # rute id (root) + rute en (/en/*)
 functions/api/  # Cloudflare Pages Functions — GET /api/ticker, POST /api/admin/ticker
+backups/        # snapshot ticker harian (restore: docs/backup-restore-runbook.md)
 ```
 
 Untuk update konten paket/aktivitas/testimoni: edit langsung file di `src/data/*.ts`,
