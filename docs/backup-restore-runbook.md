@@ -63,11 +63,27 @@ UTC) and can also be triggered manually (`workflow_dispatch`). It:
    `backups/ticker-messages.json`, and
 3. commits that file **only if it changed** (idempotent — no empty commits).
 
-The export endpoint returns the raw KV value unchanged (`functions/api/admin/ticker-export.ts`),
-so the committed file is byte-equivalent to what was stored in KV at capture
-time. The workflow keeps **only the latest snapshot** — there is no
-per-date archive history. If the ticker changes and the workflow fails before
-committing, the last committed snapshot is your restore point.
+The export endpoint returns the **envelope** `{ data, error }`, where `data`
+is the parsed KV value (`functions/api/admin/ticker-export.ts`). The workflow's
+`jq -r '.data'` therefore re-serialises the messages in jq's canonical
+pretty-printed form (2-space indent, LF, trailing newline).
+
+Two consequences worth knowing:
+
+- The committed file is the **canonical jq-formatted array**, not a literal copy
+  of whatever bytes sit in KV. When the stored value is itself jq-formatted
+  (the current state) the two are byte-identical; if a message was saved from
+  `/admin` — which stores compact `JSON.stringify` output — the stored value is
+  compact JSON while the committed file is pretty-printed. The two are then
+  **JSON-equivalent, not byte-identical**, and JSON equivalence is all the
+  restore needs.
+- Because `wrangler kv key put --path <file>` writes the file **byte for byte**,
+  restoring straight from a CRLF working-tree copy would store CRLF bytes. See
+  §Known pitfalls #4.
+
+The workflow keeps **only the latest snapshot** — there is no per-date archive
+history. If the ticker changes and the workflow fails before committing, the
+last committed snapshot is your restore point.
 
 ## Restore Procedure
 
@@ -94,9 +110,21 @@ git log --oneline -- backups/ticker-messages.json
 git show <commit>:backups/ticker-messages.json > .scratch/restore-source.json
 ```
 
-Pick the newest snapshot that predates the incident. If the working tree
-already holds the file you want, skip the `git show` step and use
-`backups/ticker-messages.json` directly.
+Pick the newest snapshot that predates the incident.
+
+> ⚠️ **Do not restore straight from the working-tree copy on Windows.** This repo
+> is checked out with `core.autocrlf=true`, so `backups/ticker-messages.json` on
+> disk is **CRLF (948 bytes)** while the committed blob is **LF (922 bytes)**.
+> `wrangler kv key put --path` writes the file byte for byte, so the CRLF copy
+> would be stored verbatim — and the byte-level check in Step 5 would then
+> report a mismatch on a perfectly healthy restore (verified 2026-10-21, see
+> §Known pitfalls #4). Materialise the file from git, or strip the CRs:
+>
+> ```bash
+> git show <commit>:backups/ticker-messages.json > .scratch/restore-source.json   # always LF
+> # or, from the working tree:
+> tr -d '\r' < backups/ticker-messages.json > .scratch/restore-source.json
+> ```
 
 ### Step 3 — Validate the snapshot BEFORE writing
 
@@ -119,8 +147,12 @@ it**. Fall back to an older snapshot.
 ### Step 4 — Restore (the only mutating step)
 
 ```bash
+# Normalise line endings first — the write below stores the file byte for byte,
+# and a CRLF source would make Step 5's byte comparison report a false mismatch.
+tr -d '\r' < .scratch/restore-source.json > .scratch/restore-source-lf.json
+
 npx wrangler kv key put "ticker:messages" \
-  --path .scratch/restore-source.json \
+  --path .scratch/restore-source-lf.json \
   --binding=CLASSMATE_KV --remote
 ```
 
@@ -142,11 +174,20 @@ npx wrangler kv key put "ticker:messages" \
 ```bash
 # 1. The stored value matches the snapshot, byte for byte
 npx wrangler kv key get "ticker:messages" --binding=CLASSMATE_KV --remote > .scratch/kv-after.json
-cmp .scratch/restore-source.json .scratch/kv-after.json && echo "KV matches snapshot"
+cmp .scratch/restore-source-lf.json .scratch/kv-after.json && echo "KV matches snapshot (byte-exact)"
+
+# 1b. If that reports a mismatch, check whether it is only line endings.
+#     JSON-equivalence is what the site actually needs:
+jq -S -c . .scratch/restore-source.json | tr -d '\r' > .scratch/a.json
+jq -S -c . .scratch/kv-after.json     | tr -d '\r' > .scratch/b.json
+cmp .scratch/a.json .scratch/b.json && echo "KV matches snapshot (content-equal)"
 
 # 2. The API serves the restored messages
 curl -s "https://<host>/api/ticker?cb=$(date +%s)" | jq .
 ```
+
+`cmp` compares **bytes**. A snapshot restored from a CRLF source differs in line
+endings only — run check 1b before declaring the restore failed.
 
 The `?cb=<timestamp>` query string is a **cache buster**. `GET /api/ticker`
 is served with `Cache-Control: public, max-age=60`, so a plain request can
@@ -182,12 +223,21 @@ up. Re-run Steps 2–5 with a different snapshot.
 3. **`wrangler kv key put` without `--remote` silently writes to the local
    dev store.** This is the single most likely way to "restore" and see no
    change.
-4. **CRLF vs LF.** `jq` on Windows emits CRLF; the workflow's
-   `ubuntu-latest` runner emits LF. A locally captured snapshot therefore
-   differs from a workflow-committed one by line endings only — JSON parsing
-   and the restore are unaffected, but the git diff is noisy. Normalize with
-   `jq -r '.data' file.json | tr -d '\r' > backups/ticker-messages.json`
-   before committing a locally captured snapshot.
+4. **CRLF vs LF — both directions.**
+   - *Capture side:* `jq` on Windows emits CRLF; the workflow's
+     `ubuntu-latest` runner emits LF. A locally captured snapshot therefore
+     differs from a workflow-committed one by line endings only — JSON parsing
+     and the restore are unaffected, but the git diff is noisy. Normalize with
+     `jq -r '.data' file.json | tr -d '\r' > backups/ticker-messages.json`
+     before committing a locally captured snapshot.
+   - *Checkout side:* the repo is cloned with `core.autocrlf=true`, so
+     `backups/ticker-messages.json` **on disk is CRLF (948 bytes)** even though
+     the committed blob is LF (922 bytes). Verified 2026-10-21: `wrangler kv key
+     put --path` stores the file's bytes verbatim, so restoring from the
+     working-tree copy stores CRLF and makes Step 5's byte-level `cmp` report a
+     mismatch on a healthy restore. Materialise the file from git (`git show
+     <commit>:backups/ticker-messages.json > ...`) or strip the CRs first —
+     Step 4 now does the strip for you.
 5. **The backup workflow targets the production domain**
    (`https://classmate.co.id/api/admin/ticker-export`). That domain did not
    resolve/reach from the execution environment on 2026-10-21, so the
@@ -216,6 +266,8 @@ Executed end-to-end against the staging namespace and site
 | 6 | Confirm storage | `wrangler kv key get …` | 922 bytes, byte-exact match with the snapshot |
 | 7 | Health | `GET /api/health` | `{"status":"ok","kv_reachable":true}` |
 | 8 | Admin surface | `GET /api/admin/ticker-export` and `POST /api/admin/ticker` without credentials | `401` both — the restore did not open the admin surface |
+| 9 | CRLF probe | restore from a CRLF copy of the same snapshot | KV stored **948 CRLF bytes**; Step 5's byte-level `cmp` reported a mismatch although the JSON was equivalent → pitfall #4, Step 2 and Step 5 corrected |
+| 10 | Restore canonical | `wrangler kv key put … --path <LF snapshot>` | KV back to **922 bytes, byte-identical to the committed blob**; `GET /api/ticker` → 3 messages, `/api/health` → ok |
 
 The drill seeded the ticker with the site's own default messages
 (`src/data/ticker-defaults.ts`) so that the visible running header on staging
