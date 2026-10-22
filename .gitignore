@@ -3,16 +3,15 @@ dist/
 .astro/
 coverage/
 test-results/
-.claude/
 .wrangler/
-.kilo/
 
 # dependencies
 node_modules/
 
 # environment
 .env
-.env.production
+.env.*
+!.env.example
 .dev.vars
 *.pem
 *.key
@@ -21,7 +20,19 @@ secrets/
 
 # editor / OS
 .DS_Store
+Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 
+# logs
+*.log
 
+# AI-agent local state
+.claude/
+.kilo/
+.freebuff/
+.codebuff/
+.cursor/
+
+# scratch / throwaway working files
+.scratch/

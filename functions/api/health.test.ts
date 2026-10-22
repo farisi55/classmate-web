@@ -116,6 +116,31 @@ describe('GET /api/ticker', () => {
     expect(body.error.message).not.toMatch(/\b[C-Z]:\/|\/src\b|\/functions\b|\.ts\b/i);
     expect(Object.keys(body)).toEqual(['data', 'error']);
   });
+
+  // Task #025 AC2: a degraded KV must be reflected by /api/health *without*
+  // taking another endpoint down. This is the KV-read-throws path in
+  // functions/api/ticker.ts (the try/catch that returns `ticker_read_failed`),
+  // which had no coverage until now.
+  it('returns a clean 500 JSON envelope when the KV read throws — other endpoint does not crash', async () => {
+    const env = { CLASSMATE_KV: makeKV(new Error('KV connection refused')) };
+    const request = new Request('https://example.com/api/ticker');
+    const ctx = { request, env } as Parameters<
+      NonNullable<typeof import('./ticker').onRequestGet>[0]
+    >;
+
+    const handler = (await import('./ticker')).onRequestGet;
+    const response = await handler(ctx);
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(response.headers.get('Content-Type')).toBe('application/json');
+    expect(body).toEqual({
+      data: null,
+      error: { code: 'ticker_read_failed', message: 'Could not read ticker messages.' },
+    });
+    // The raw KV error must not reach the client.
+    expect(JSON.stringify(body)).not.toContain('KV connection refused');
+  });
 });
 
 // --- POST /api/admin/ticker ---

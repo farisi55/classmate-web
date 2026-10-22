@@ -1,0 +1,26 @@
+[
+  {
+    "id": "promo-default",
+    "text_id": "Tanya paket Art Party untuk acara kamu — respon cepat via WhatsApp.",
+    "text_en": "Ask about an Art Party package for your event — quick response on WhatsApp.",
+    "active": true,
+    "priority": 1,
+    "updated_at": "2026-10-21T09:30:00.000Z"
+  },
+  {
+    "id": "aktivitas-default",
+    "text_id": "Aktivitas favorit bulan ini: Slime Experience & Tie Dye.",
+    "text_en": "This month's favorite activities: Slime Experience & Tie Dye.",
+    "active": true,
+    "priority": 2,
+    "updated_at": "2026-10-21T09:30:00.000Z"
+  },
+  {
+    "id": "bestseller-default",
+    "text_id": "Best seller: Paket Art Party 25 Peserta — pas untuk ulang tahun & gathering kecil.",
+    "text_en": "Best seller: 25-Participant Art Party Package — a fit for birthdays & small gatherings.",
+    "active": true,
+    "priority": 3,
+    "updated_at": "2026-10-21T09:30:00.000Z"
+  }
+]

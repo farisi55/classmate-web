@@ -1,0 +1,218 @@
+openapi: 3.0.3
+info:
+  title: Classmate Indonesia API Documentation
+  version: 1.0.0
+  description: Internal API documentation for Classmate Indonesia — Company Profile & Activity Catalog Website
+  contact:
+    name: Classmate Indonesia
+servers:
+  - url: /api
+    description: Base URL for all API endpoints
+
+tags:
+  - name: Ticker
+    description: Ticker message management
+  - name: Admin
+    description: Admin endpoints (Access JWT required)
+
+paths:
+  /api/ticker:
+    get:
+      summary: Baca pesan ticker aktif
+      tags:
+        - Ticker
+      operationId: getTicker
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref '#/components/schemas/TickerResponse'
+        default:
+          description: Failed response
+          content:
+            application/json:
+              schema:
+                $ref '#/components/schemas/ErrorResponse'
+      description: >
+        Baca pesan ticker aktif yang tersimpan di KV.
+        Maksimum 10 pesan boleh tersimpan, maksimum 3 pesan aktif tampil bersamaan.
+        Pembacaan publik, tidak memerlukan otentikasi.
+
+  /api/admin/ticker:
+    post:
+      summary: Overwrite penuh array ticker
+      tags:
+        - Admin
+      operationId: adminTicker
+      security:
+        - Cf-Access-Jwt-Assertion: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref '#/components/schemas/TickerMessageArray'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref '#/components/schemas/TickerResponse'
+        '401':
+          description: Unauthorized - Access JWT required
+          content:
+            application/json:
+              schema:
+                $ref '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Invalid or expired JWT
+          content:
+            application/json:
+              schema:
+                $ref '#/components/schemas/ErrorResponse'
+      description: >
+        Overwrite penuh array pesan ticker.
+        Payload array 1–10 item, tiap item type-checked terhadap skema TickerMessage.
+        Operasi idempotent — safe untuk retry.
+
+  /api/admin/ticker-export:
+    get:
+      summary: Baca raw KV value untuk backup
+      tags:
+        - Admin
+      operationId: tickerExport
+      security:
+        - Cf-Access-Client-Id: []
+        - Cf-Access-Client-Secret: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref '#/components/schemas/TickerResponse'
+        '401':
+          description: Unauthorized - Access Service Token required
+          content:
+            application/json:
+              schema:
+                $ref '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Invalid or missing Service Token
+          content:
+            application/json:
+              schema:
+                $ref '#/components/schemas/ErrorResponse'
+      description: >
+        Baca raw nilai KV `ticker:messages` sebagai-is untuk tujuan backup.
+        Jika key belum pernah ditulis, mengembalikan array kosong `[]`, bukan error.
+
+  /api/health:
+    get:
+      summary: Health check endpoint
+      tags:
+        - Ticker
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref '#/components/schemas/HealthResponse'
+        default:
+          description: Failed response
+          content:
+            application/json:
+              schema:
+                $ref '#/components/schemas/ErrorResponse'
+      description: >
+        Cek kesehatan aplikasi dan koneksi KV.
+        Mengembalikan status 200 jika KV tersedia, 200 saja (tanpa body error)
+        saat KV tidak tersedia, sehingga monitor dapat membedakan "app alive, backend degraded" dari crash.
+
+components:
+  schemas:
+    TickerMessage:
+      type: object
+      required:
+        - id
+        - text_id
+        - text_en
+        - active
+        - priority
+      properties:
+        id:
+          type: string
+          description: Identifikasi unik pesan
+        text_id:
+          type: string
+          description: Konten bahasa Indonesia
+          notNull: true
+        text_en:
+          type: string
+          description: Konten bahasa Inggris
+          notNull: true
+        active:
+          type: boolean
+          description: Status aktif/tidak aktif
+          notNull: true
+          default: true
+        priority:
+          type: integer
+          description: Prioritas pesan
+          notNull: true
+    TickerMessageArray:
+      type: array
+      items:
+        $ref '#/components/schemas/TickerMessage'
+      minItems: 1
+      maxItems: 10
+      description: Array pesan ticker (1-10 item)
+    TickerResponse:
+      type: object
+      required:
+        - data
+        - error
+      properties:
+        data:
+          description: Data response (selalu ada, bisa array kosong)
+          oneOf:
+            - type: array
+              items:
+                $ref '#/components/schemas/TickerMessage'
+            - type: object
+              description: Empty state when no messages
+            - type: string
+              description: Single message when only one
+        error:
+          $ref '#/components/schemas/ErrorResponse'
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - kv_reachable
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+          description: Status aplikasi
+        kv_reachable:
+          type: boolean
+          description: Apakah KV terjangkau
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Kode error
+        message:
+          type: string
+          description: Pesan error
+        ## request_id di-specifically TIDAK mencakup (keputusan eksplisit, skala API terlalu kecil untuk infra tracing)
