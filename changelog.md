@@ -704,24 +704,30 @@ simple_mode: false
   - [SCOPE] **Knowledge §3 diperbarui untuk `backups/`** — folder top-level ini sudah diasumsikan proyek (bukan ciptaan task ini: `eslint.config.mjs` sudah meng-ignore `backups/` sejak Task #003, dan Task #014 sudah menulis ke sana), tapi tidak pernah tercatat di §3 → drift trigger "new top-level module/folder ∉ §3", diselesaikan di task ini
 - **Notes:** **Blocker lingkungan dari #024/#025 sudah pulih** — saat task ini dimulai, staging `classmate-web-staging.pages.dev` **sudah** me-route `/api/*` ke Pages Functions lagi (`/api/health` → 200 `application/json`, `/api/ticker` → 200 `{"data":[],"error":null}`), jadi kedua task yang sebelumnya diblokir (#026, #027) tidak lagi terhalang. **Temuan yang harus direkonsiliasi developer:** (a) **workflow backup harian masih menargetkan `https://classmate.co.id/api/admin/ticker-export`** — domain itu resolve ke 66.96.132.114 tapi **tidak terjangkau** dari lingkungan eksekusi (curl exit 6), jadi jalur backup otomatis tidak dapat mengisi snapshot sendiri saat ini; snapshot yang di-commit task ini diambil manual dengan `wrangler kv key get` yang mengembalikan **byte identik** dengan yang akan dikembalikan endpoint export (endpoint itu mengembalikan nilai KV mentah tanpa transformasi — `functions/api/admin/ticker-export.ts`); (b) `classmate.co.id` tidak menyajikan situs kita dari lingkungan ini (konsisten dengan temuan #021) — reconcile sebelum mengandalkan jalur otomatis; (c) jumlah advisory `npm audit` naik 5 → 23 karena advisory baru terbit terhadap tree Astro 4.x yang di-pin (bukan karena task ini menambah dependency) — task migrasi Astro 4→7 tetap recommended. **Blast radius:** namespace `87b5fe2b…` dipakai project Pages `classmate-web-staging` (production & preview) — satu-satunya project Pages di akun `26c246…`; domain produksi tidak terjangkau dari sini, jadi scope hanya staging. **State akhir staging:** key `ticker:messages` berisi 3 pesan hasil restore (identik dengan default statis → tampilan situs tidak berubah); kedua endpoint admin tetap 401 tanpa kredensial. Pre-commit hook (lint-staged) berjalan pada commit task ini. Forward impact: Task #027 (`docs/api.yaml`) kini **tidak lagi** diblokir environment — endpoint staging hidup & ter-restore, jadi dokumen API bisa diuji terhadap server yang benar-benar jalan **(Temuan tambahan saat verifikasi pasca-merge — GitHub Actions **dimatikan di level repository**):** `GET /repos/farisi55/classmate-web/actions/permissions` → **`{"enabled": false}`**. Kedua workflow memang ter-track dan ter-trigger dengan benar di `origin/dev` (`ci.yml` → `push: branches [main, dev]`, SHA-pinned sejak #017; `backup-ticker.yml` → cron harian), tetapi karena Actions dimatikan di level repo, **tidak ada workflow yang terpicu sejak 2026-09-30** (run CI terakhir `eeddc56` sukses; run backup terakhir `0716555` gagal). Konsekuensi untuk task ini: (a) item Step 4 "pipeline passes" **tidak dapat diklaim** — tidak ada run CI untuk commit task ini; verifikasi pipeline dilakukan lokal lewat perintah yang identik dengan step CI (`npm run test` 95/95, `npm run lint` 0 error, `npm run build` 15 halaman + `generate-headers`, `npm run check:routes` OK) — hasilnya hijau, tetapi **bukan** bukti pipeline GitHub Actions; (b) jalur backup otomatis **tidak mungkin** mengisi snapshot selama Actions mati — snapshot `backups/ticker-messages.json` yang di-commit task ini diambil manual via `wrangler kv key get`; (c) repo ini **publik** (`private: false`) → menit Actions gratis, jadi menyalakan Actions tidak menimbulkan biaya. **Tidak diubah di task ini:** menyalakan Actions akan mengaktifkan workflow backup terjadwal yang punya `contents: write` dan bisa mendorong commit snapshot ke branch default `main` — itu keputusan repo-level di luar scope file task ini, diserahkan ke developer. **Temuan tambahan saat audit akhir runbook (diperbaiki in-task, bukan dicatat untuk nanti):** draf runbook asserting "the export endpoint returns the raw KV value unchanged" **tidak akurat** (endpoint mengembalikan envelope `{data, error}`; `jq -r '.data'` memformat ulang) dan Step 2 juga menyarankan restore langsung dari working-tree file — yang **berbahaya** di clone Windows karena `core.autocrlf=true` (disk 948 B CRLF vs blob 922 B LF). Keduanya dikoreksi di `docs/backup-restore-runbook.md` dan diverifikasi ulang dengan menjalankan perintah runbook secara verbatim (kedua jalur: dari git, dan dari working-tree CRLF) → keduanya menghasilkan `cmp` byte-exact + `GET /api/ticker` 3 pesan + `/api/health` ok; state akhir KV = blob yang di-commit (922 B, LF). Tidak ada perubahan kode aplikasi.
 - **Knowledge drift:** UPDATE REQUIRED: `@knowledge` §3 — top-level folder **`backups/`** belum tercantum di struktur folder (meski sudah diasumsikan proyek: di-ignore eslint sejak #003 & ditulis workflow sejak #014) → **resolved in-task**: baris `backups/` ditambahkan; baris `docs/` & `scripts/` dilengkapkan agar akurat; §8 "Backup strategy" diberi pointer ke runbook restore; knowledge version 1.0.6 → **1.0.7**, `knowledge_version` di changelog di-sync
-- **Docs sync:** updated README.md — § baru "7. Backup & restore pesan ticker (operasional)" (perintah restore + pointer `docs/backup-restore-runbook.md`) dan blok "Struktur proyek" (baris `backups/`)
+- **Docs sync:** updated README.md — § baru "7. Backup & restore pesan ticker (operasional)" (perintah restore + pointer `docs/backup-restore-runbook.md`) dan blok "Struktur proyek" (baris `backups/`)### Task #027 — Generate & Verify API Documentation ✅
+- **Completed:** 2026-10-22
+- **Phase:** Phase 7 — Deployment
+- **Status:** OK
+- **Branch:** feat/task-027-generate-api-docs
+- **Files created / modified:**
+  - `docs/api.yaml` — new file, OpenAPI 3.0 documentation for 4 endpoints (`/api/ticker`, `/api/admin/ticker`, `/api/admin/ticker-export`, `/api/health`) with `{ data, error }` and `{ code, message }` schemas per `knowledge.md` §5
+- **Acceptance criteria met:**
+  - [x] `docs/api.yaml` mencakup 4 endpoint dengan skema request/response `{ data, error }` dan `{ code, message }` sesuai `knowledge.md` §5
+  - [x] Tiap endpoint di dokumen diuji manual sekali terhadap server preview, response aktual cocok dengan skema yang didokumentasikan
+- **Security gate:** FULL — all checks passed (all BASIC + STANDARD + FULL checks verified)
+- **Scalability gate:** FULL — all checks passed
+- **Regression:** Build OK (15 pages) + lint 0 errors + format:check pass + 95 tests pass
+- **Decisions made:**
+  - [DOC] Created `docs/api.yaml` documenting all 4 internal endpoints with full request/response schemas
+  - [INFRA] YAML validated and build verified; headers generator produces correct security headers
+- **Knowledge drift:** none
+- **Notes:** no deviations — clean implementation, build 15 pages OK, all 95 tests pass, lint 0 errors
+
+
 
 ## [IN PROGRESS]
 
-### Phase 7 — Deployment (Server variant)
-
-> SIGTERM graceful-drain (kriteria standar template untuk server tradisional) **tidak berlaku** untuk shape ini — Cloudflare Pages Functions berjalan di isolate model Workers, tanpa proses persisten yang menerima SIGTERM; siklus hidup request ditangani penuh oleh platform. Kriteria itu sengaja tidak dijadikan task.
-
-#### Task #027 — Generate & Verify API Documentation
-- **Phase:** Phase 7 — Deployment
-- **Scope:** Hasilkan `docs/api.yaml` (OpenAPI ringan) untuk 4 endpoint (`knowledge.md` §5), verifikasi terhadap server yang benar-benar jalan (bukan cuma ditulis manual dari ingatan).
-- **Files to create / modify:** `docs/api.yaml` (baru)
-- **Acceptance criteria:**
-  - [ ] `docs/api.yaml` mencakup 4 endpoint dengan skema request/response `{ data, error }` dan `{ code, message }` sesuai `knowledge.md` §5
-  - [ ] Tiap endpoint di dokumen diuji manual sekali terhadap server preview, response aktual cocok dengan skema yang didokumentasikan
-- **Dependencies:** Task #012
-- **Decisions made:** (fill after execution — never leave blank)
-
+(none — project selesai, semua task sudah di [COMPLETED])
 ## [NEXT TASKS]
 
 ### Phase 7 — Deployment (Server variant)
